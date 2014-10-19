@@ -29,13 +29,87 @@
  */
 package purejavahidapi;
 
+/**
+ * HidDeviceInfo instances represent all that be found out about a specific connected 
+ * USB HID device without actually opening it. Basically the information that the lower
+ * level USB system learns from the device descriptor when the devise is plugged in.
+ * <p>
+ * For more details of see the USB Specification.
+ * <p>
+ * @author nyholku
+ *
+ */
 public interface HidDeviceInfo{
+	/**
+	 * This method returns a string that represents a platform dependent path that describes
+	 * the 'physical' path through hubs and ports to the device. 
+	 * <p>
+	 * The main use of the path is to pass it to the {@link PureJavaHidApi#openDevice(String)
+	 * to obtain an instance {@link HidDevice} which can subsequently be used to communicate
+	 * with the device.
+	 * 
+	 * @return a string representing a 'path' to the device
+	 */
 	public String getPath();
+	/**
+	 * This method returns the 16 bit Vendor Id of the device.
+	 * <p>
+	 * Note that the return type is <code>short</code> so when compared against literals 
+	 * or variables of type <code>int</code> sign extension interferes and thus it is
+	 * necessary to cast the <code>int</code>  type to <code>short</code>.
+	 * 
+	 * @return the 16 bit Vendor Id
+	 */
 	public short getVendorId();
+	/**
+	 * This method returns the 16 bit Product Id of the device.
+	 * <p>
+	 * Note that the return type is <code>short</code> so when compared against literals 
+	 * or variables of type <code>int</code> sign extension interferes and thus it is
+	 * necessary to cast the <code>int</code>  type to <code>short</code>.
+	 * 
+	 * @return the 16 bit Product Id
+	 */
 	public short getProductId();
+	/**
+	 * This method returns the 16 bit Release Number of the device.
+	 * <p>
+	 * Note that the return type is <code>short</code> so when compared against literals 
+	 * or variables of type <code>int</code> sign extension interferes and thus it is
+	 * necessary to cast the <code>int</code>  type to <code>short</code>
+	 * 
+	 * @return the 16 bit Release Number
+	 */
 	public short getReleaseNumber();
+	/**
+	 * This method returns the 16 bit Usage Page number of the device.
+	 * <p>
+	 * Note that the return type is <code>short</code> so when compared against literals 
+	 * or variables of type <code>int</code> sign extension interferes and thus it is
+	 * necessary to cast the <code>int</code>  type to <code>short</code>
+	 * 
+	 * @return the 16 bit Usage Page number
+	 */
 	public short getUsagePage();
+	/**
+	 * This method returns the Manufacturer String if available otherwise null is returned.
+	 * <p>
+	 * 
+	 * @return the Manufacturer String or null
+	 */
 	public String getManufacturerString();
+	/**
+	 * This method returns the Product String if available otherwise null is returned.
+	 * <p>
+	 * 
+	 * @return the Product String or null
+	 */
 	public String getProductString();
+	/**
+	 * This method returns the Serial Number String if available otherwise null is returned.
+	 * <p>
+	 * 
+	 * @return the Serial Number String or null
+	 */
 	public String getSerialNumberString();
 }
