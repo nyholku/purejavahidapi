@@ -62,40 +62,69 @@ To list all available HID devices use code like:
 ```java
 import purejavahidapi.*;
 ...
-List<HidDeviceInfo> list = PureJavaHidApi.enumerateDevices(0x0000,0x0000);
-String path = null;
-for (HidDeviceInfo info : list) {
+List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
+for (HidDeviceInfo info : devList) {
 	System.out.printf("VID = 0x%04X PID = 0x%04X Manufacturer = %s Product = %s Path = %s\n", //
-	info.getVendorId(), //
-	info.getProductId(), //
-	info.getManufacturerString(), //
-	info.getProductString(), //
-	info.getPath());
-	}
+		info.getVendorId(), //
+		info.getProductId(), //
+		info.getManufacturerString(), //
+		info.getProductString(), //
+		info.getPath());
+		}
 
 ```
 
-To open a generic gamepad and attach and input report listener:
+To find a generic USB Gamepad:
 
 ```java
 import purejavahidapi.*;
 
-List<HidDeviceInfo> list = PureJavaHidApi.enumerateDevices(0x0810, 0x0005);
-if (!list.isEmpty()) {
-	HidDeviceInfo info = list.get(0);
-	HidDevice dev = PureJavaHidApi.openDevice(info.getPath());
-	dev.setInputReportListener(new InputReportListener() {
-		@Override
-		public void onInputReport(HidDevice source, byte reportID, byte[] reportData, int reportLength) {
-			System.out.printf("onInputReport: reportID %d reportLength %d\n", reportID, reportLength);
-			}
-		});
+List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
+HidDeviceInfo devInfo = null;
+for (HidDeviceInfo info : devList) {
+	if (info.getVendorId() == 0x0810 && info.getProductId() == 0x0005) {
+		devInfo = info;
+		break;
+		}
 	}
+
+```
+... and then open and attach an input report listener to it:
+
+```java
+HidDevice dev=PureJavaHidApi.openDevice(devInfo.getPath());
+dev.setInputReportListener(new InputReportListener() {
+	@Override
+	public void onInputReport(HidDevice source, byte Id, byte[] data, int len) {
+		System.out.printf("onInputReport: id %d len %d data ", Id, len);
+		for (int i = 0; i < len; i++)
+			System.out.printf("%02X ", data[i]);
+		System.out.println();
+		}
+	});
 
 ```
 
 
 ### Getting Started
+
+
+All you need to do is to place the `jna.jar` ja `purejahidapi.jar` in your class path and start coding.
+
+You'll probably do this in an IDE but here is how to compile and run one of the examples from the commands line.
+
+Check out the whole project from github and and go to the examples directory and execute this:
+
+
+```
+java -cp ../bin/purejavahidapi.jar:../lib/jna-4.0.0.jar Example1
+```
+
+or this is if you are on Windows:
+
+```
+java -cp ..\bin\purejavahidapi.jar;..\lib\jna-4.0.0.jar Example1
+```
 
 
 ### License 
