@@ -9,7 +9,7 @@ public class Example2 {
 			List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
 			HidDeviceInfo devInfo = null;
 			for (HidDeviceInfo info : devList) {
-				if (info.getVendorId() == 0x0810 && info.getProductId() == 0x0005) {
+				if (info.getVendorId() == (short) 0x0810 && info.getProductId() == (short) 0x0005) {
 					devInfo = info;
 					break;
 				}
@@ -17,7 +17,7 @@ public class Example2 {
 			if (devInfo == null)
 				System.err.println("device not found");
 			else {
-				HidDevice dev=PureJavaHidApi.openDevice(devInfo.getPath());
+				HidDevice dev = PureJavaHidApi.openDevice(devInfo.getPath());
 				dev.setInputReportListener(new InputReportListener() {
 					@Override
 					public void onInputReport(HidDevice source, byte Id, byte[] data, int len) {
