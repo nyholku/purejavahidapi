@@ -108,6 +108,9 @@ dev.setInputReportListener(new InputReportListener() {
 
 ### Getting Started
 
+```nix
+java -cp ../bin/purejavahidapi.jar:../lib/jna-4.0.0.jar Example1
+```
 
 ### License 
 
