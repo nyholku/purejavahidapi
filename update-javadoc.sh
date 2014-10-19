@@ -3,7 +3,7 @@
 # Before executing this script, generate the javadoc files into build/docs/javadoc/.
 git checkout master || exit $?
 git checkout gh-pages || exit $?
-javadoc -q -d build/javadoc  -sourcepath src purejavahidapi 
+javadoc -d build/javadoc  -sourcepath src purejavahidapi 
 # Clear out the old files:
 rm -rf javadoc/* 
 # Replace them with new files and commit them:
