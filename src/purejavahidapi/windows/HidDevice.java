@@ -122,7 +122,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	@Override
-	public void close() {
+	synchronized public void close() {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 
@@ -135,7 +135,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	@Override
-	public int setOutputReport(byte reportID, byte[] data, int length) {
+	synchronized public int setOutputReport(byte reportID, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		// In Windows writeFile() to HID device data has to be preceded with the report number, regardless 
@@ -160,7 +160,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	@Override
-	public int setFeatureReport(byte[] data, int length) {
+	synchronized public int setFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		if (!HidD_SetFeature(m_Handle, data, length)) {
@@ -172,21 +172,21 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	@Override
-	public void setInputReportListener(InputReportListener listener) {
+	synchronized public void setInputReportListener(InputReportListener listener) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		m_InputReportListener = listener;
 	}
 
 	@Override
-	public void setDeviceRemovalListener(DeviceRemovalListener listener) {
+	synchronized public void setDeviceRemovalListener(DeviceRemovalListener listener) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		m_DeviceRemovalListener = listener;
 	}
 
 	@Override
-	public int getFeatureReport(byte[] data, int length) {
+	synchronized public int getFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		if (!HidD_GetFeature(m_Handle, data, length)) {
@@ -197,7 +197,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	@Override
-	public HidDeviceInfo getHidDeviceInfo() {
+	synchronized public HidDeviceInfo getHidDeviceInfo() {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		return m_HidDeviceInfo;

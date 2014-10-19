@@ -149,14 +149,14 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	@Override
-	public void setInputReportListener(InputReportListener listener) {
+	synchronized public void setInputReportListener(InputReportListener listener) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		m_InputReportListener = listener;
 	}
 
 	@Override
-	public void setDeviceRemovalListener(DeviceRemovalListener listener) {
+	synchronized public void setDeviceRemovalListener(DeviceRemovalListener listener) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		m_DeviceRemovalListener = listener;
@@ -257,7 +257,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	}
 
-	public int getFeatureReport(byte[] data, int length) {
+	synchronized public int getFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		int[] len = { length };
@@ -288,19 +288,19 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			return -1;
 	}
 
-	public int setOutputReport(byte reportID, byte[] data, int length) {
+	synchronized public int setOutputReport(byte reportID, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		return setReport(kIOHIDReportTypeOutput, reportID, data, length);
 	}
 
-	public int setFeatureReport(byte[] data, int length) {
+	synchronized  public int setFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		return setReport(kIOHIDReportTypeFeature, (byte) 0, data, length);
 	}
 
-	public void close() {
+	synchronized public void close() {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 
@@ -348,7 +348,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	@Override
-	public HidDeviceInfo getHidDeviceInfo() {
+	synchronized public HidDeviceInfo getHidDeviceInfo() {
 		return m_HidDeviceInfo;
 	}
 
