@@ -54,6 +54,7 @@ import purejavahidapi.shared.Frontend;
 import purejavahidapi.shared.SyncPoint;
 
 public class HidDevice implements purejavahidapi.HidDevice {
+	private boolean m_Open=true;
 	private Frontend m_Frontend;
 	private HidDeviceInfo m_HidDeviceInfo;
 	private int m_InternalId; // used when passing 'HidDevice' to Mac OS X callbacks
@@ -149,13 +150,16 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	@Override
 	public void setInputReportListener(InputReportListener listener) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		m_InputReportListener = listener;
 	}
 
 	@Override
 	public void setDeviceRemovalListener(DeviceRemovalListener listener) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		m_DeviceRemovalListener = listener;
-
 	}
 
 	static void processPendingEvents() {
@@ -254,6 +258,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	public int getFeatureReport(byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		int[] len = { length };
 		int res;
 
@@ -283,14 +289,20 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	public int setOutputReport(byte reportID, byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		return setReport(kIOHIDReportTypeOutput, reportID, data, length);
 	}
 
 	public int setFeatureReport(byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		return setReport(kIOHIDReportTypeFeature, (byte) 0, data, length);
 	}
 
 	public void close() {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 
 		/* Disconnect the report callback before close. */
 		if (!m_Disconnected) {
@@ -332,6 +344,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 		MacOsXBackend.removeHidDevice(m_InternalId);
 		m_Frontend.closeDevice(this);
+		m_Open = false;
 	}
 
 	@Override

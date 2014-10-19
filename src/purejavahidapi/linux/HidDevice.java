@@ -40,6 +40,7 @@ import purejavahidapi.shared.SyncPoint;
 import static purejavahidapi.linux.UdevLibrary.*;
 
 public class HidDevice implements purejavahidapi.HidDevice {
+	private boolean m_Open = true;
 	private int m_DeviceHandle;
 
 	private InputReportListener m_InputReportListener;
@@ -138,15 +139,20 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	@Override
 	public void close() {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		m_StopThread=true;
 		UdevLibrary.close(m_DeviceHandle);
 		m_Thread.interrupt();
 		m_SyncShutdown.waitAndSync();
 		m_Frontend.closeDevice(this);
+		m_Open=false;
 	}
 
 	@Override
 	public int setOutputReport(byte reportID, byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		// In Linux write() to HID device data is preceded with the report number only if it non zero (ie numbered reports are used)
 		System.out.println("purejavahidapi.linux.HidDevice.setOutputReport() not tested!");
 		int wlen = length;
@@ -165,26 +171,36 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	@Override
 	public int setFeatureReport(byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		return -1;
 	}
 
 	@Override
 	public void setInputReportListener(InputReportListener listener) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		m_InputReportListener = listener;
 	}
 
 	@Override
 	public void setDeviceRemovalListener(DeviceRemovalListener listener) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		m_DeviceRemovalListener = listener;
 	}
 
 	@Override
 	public int getFeatureReport(byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		return -1;
 	}
 
 	@Override
 	public HidDeviceInfo getHidDeviceInfo() {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		return m_HidDeviceInfo;
 	}
 

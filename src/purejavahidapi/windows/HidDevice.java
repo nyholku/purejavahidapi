@@ -50,6 +50,7 @@ import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.Kernel32Library.HANDLE;
 
 public class HidDevice implements purejavahidapi.HidDevice {
+	private boolean m_Open = true;
 	private Frontend m_Frontend;
 	private HANDLE m_Handle;
 	private int m_OutputReportLength;
@@ -122,15 +123,21 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	@Override
 	public void close() {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
+
 		m_StopThread=true;
 		m_Thread.interrupt();
 		CloseHandle(m_Handle);
 		m_SyncShutdown.waitAndSync();
 		m_Frontend.closeDevice(this);
+		m_Open=false;
 	}
 
 	@Override
 	public int setOutputReport(byte reportID, byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		// In Windows writeFile() to HID device data has to be preceded with the report number, regardless 
 		m_OutputReportMemory.write(0, new byte[] { reportID }, 0, 1);
 		m_OutputReportMemory.write(1, data, 0, length);
@@ -154,6 +161,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	@Override
 	public int setFeatureReport(byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		if (!HidD_SetFeature(m_Handle, data, length)) {
 			//register_error(dev, "HidD_SetFeature");
 			return -1;
@@ -164,16 +173,22 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	@Override
 	public void setInputReportListener(InputReportListener listener) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		m_InputReportListener = listener;
 	}
 
 	@Override
 	public void setDeviceRemovalListener(DeviceRemovalListener listener) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		m_DeviceRemovalListener = listener;
 	}
 
 	@Override
 	public int getFeatureReport(byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		if (!HidD_GetFeature(m_Handle, data, length)) {
 			//register_error(dev, "HidD_SetFeature");
 			return -1;
@@ -183,6 +198,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	@Override
 	public HidDeviceInfo getHidDeviceInfo() {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
 		return m_HidDeviceInfo;
 	}
 
