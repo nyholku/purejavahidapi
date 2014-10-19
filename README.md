@@ -62,34 +62,43 @@ To list all available HID devices use code like:
 ```java
 import purejavahidapi.*;
 ...
-List<HidDeviceInfo> list = PureJavaHidApi.enumerateDevices(0x0000,0x0000);
-String path = null;
-for (HidDeviceInfo info : list) {
+List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
+for (HidDeviceInfo info : devList) {
 	System.out.printf("VID = 0x%04X PID = 0x%04X Manufacturer = %s Product = %s Path = %s\n", //
-	info.getVendorId(), //
-	info.getProductId(), //
-	info.getManufacturerString(), //
-	info.getProductString(), //
-	info.getPath());
-	}
+		info.getVendorId(), //
+		info.getProductId(), //
+		info.getManufacturerString(), //
+		info.getProductString(), //
+		info.getPath());
+		}
 
 ```
 
-To open a generic gamepad and attach and input report listener:
+To find a generic USB Gamepad:
 
 ```java
 import purejavahidapi.*;
 
-List<HidDeviceInfo> list = PureJavaHidApi.enumerateDevices(0x0810, 0x0005);
-if (!list.isEmpty()) {
-	HidDeviceInfo info = list.get(0);
-	HidDevice dev = PureJavaHidApi.openDevice(info.getPath());
-	dev.setInputReportListener(new InputReportListener() {
-		@Override
-		public void onInputReport(HidDevice source, byte reportID, byte[] reportData, int reportLength) {
-			System.out.printf("onInputReport: reportID %d reportLength %d\n", reportID, reportLength);
-			}
-		});
+List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
+HidDeviceInfo devInfo = null;
+for (HidDeviceInfo info : devList) {
+	if (info.getVendorId() == 0x0810 && info.getProductId() == 0x0005) {
+		devInfo = info;
+		break;
+		}
+	}
+
+```
+... and then open and attach an input report listener to it:
+
+```java
+List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
+HidDeviceInfo devInfo = null;
+for (HidDeviceInfo info : devList) {
+	if (info.getVendorId() == 0x0810 && info.getProductId() == 0x0005) {
+		devInfo = info;
+		break;
+		}
 	}
 
 ```
