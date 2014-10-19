@@ -21,13 +21,15 @@ It is spefifically for accessing these types of devices that PureJavaHidApi is a
 
 Now why do they represent represent themselves as HID devices?
 
-For one overwhelming advantage over other class of USB devices: all major operating systems have built in HID drivers which means that no, absolutely no driver installation and user interaction is required. Hard as it for a programmer to understand driver installation is a major hurdle and can make the difference between making the sale or not.
+For one overwhelming advantage over other class of USB devices: all major operating systems have built in HID drivers which means that no driver installation is required. Hard as it for a programmer to understand driver installation is a major hurdle and can make the difference between making the sale or not.
 
 If you are considering developing a USB device then incarnating it as a HID device is an option worth considering.
 
 So what is the catch?
 
 HID devices are limited to transferring one 64 byte packet once each 1 msec or 64000 bytes/sec each way. If you need more than that you have take an other route, I suggest you head over to <a href="http://libusb.info" libusb project </a>.
+
+PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java"> hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the crucial difference that it builds on the nice C-library <a href=""> HIDAPI </a>
 
 
 
