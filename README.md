@@ -82,7 +82,7 @@ import purejavahidapi.*;
 List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
 HidDeviceInfo devInfo = null;
 for (HidDeviceInfo info : devList) {
-	if (info.getVendorId() == 0x0810 && info.getProductId() == 0x0005) {
+	if (info.getVendorId() == (short)0x0810 && info.getProductId() == (short)0x0005) {
 		devInfo = info;
 		break;
 		}
