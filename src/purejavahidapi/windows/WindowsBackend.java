@@ -47,6 +47,7 @@ import static purejavahidapi.windows.HidLibrary.*;
 
 public class WindowsBackend implements Backend {
 	private Frontend m_Frontend;
+
 	@Override
 	public void init() {
 
@@ -99,16 +100,15 @@ public class WindowsBackend implements Backend {
 	}
 
 	@Override
-	public List<purejavahidapi.HidDeviceInfo> enumerateDevices(short vendorId, short productId) {
-		
-		
+	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
+
 		try {
 			boolean res;
 			List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
 
 			// Windows objects for interacting with the driver.
 			GUID InterfaceClassGuid = new GUID(0x4d1e55b2, 0xf16f, 0x11cf, 0x88, 0xcb, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30);
-			
+
 			SP_DEVINFO_DATA devinfo_data = new SP_DEVINFO_DATA();
 			SP_DEVICE_INTERFACE_DATA device_interface_data = new SP_DEVICE_INTERFACE_DATA();
 			SP_DEVICE_INTERFACE_DETAIL_DATA_A device_interface_detail_data = null;
@@ -131,7 +131,7 @@ public class WindowsBackend implements Backend {
 				int[] required_size = { 0 };
 
 				res = SetupDiEnumDeviceInterfaces(device_info_set, null, InterfaceClassGuid, device_index, device_interface_data);
-				
+
 				if (!res) {
 					// A return of FALSE from this function means that
 					// there are no more devices.
@@ -142,11 +142,11 @@ public class WindowsBackend implements Backend {
 				// tell us how long the detail struct needs to be. The
 				// size is put in &required_size.
 				res = SetupDiGetDeviceInterfaceDetailA(device_info_set, device_interface_data, null, 0, required_size, null);
-				if (!res && GetLastError()!=ERROR_INSUFFICIENT_BUFFER) {
+				if (!res && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
 					// This is not supposed to happen ever but it would be good to know if it does
-					throw new RuntimeException("SetupDiGetDeviceIntehrfaceDetailA resulted in error "+GetLastError());
+					throw new RuntimeException("SetupDiGetDeviceIntehrfaceDetailA resulted in error " + GetLastError());
 				}
-				
+
 				// Allocate a long enough structure for
 				// device_interface_detail_data.
 				device_interface_detail_data = new SP_DEVICE_INTERFACE_DETAIL_DATA_A(required_size[0]);
@@ -158,7 +158,7 @@ public class WindowsBackend implements Backend {
 				res = SetupDiGetDeviceInterfaceDetailA(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null);
 
 				if (!res) { // This is not supposed to happen ever but it would be good to know if it does
-					throw new RuntimeException("SetupDiGetDeviceIntehrfaceDetailA resulted in error "+GetLastError());
+					throw new RuntimeException("SetupDiGetDeviceIntehrfaceDetailA resulted in error " + GetLastError());
 				}
 
 				// Make sure this device is of Setup Class "HIDClass" and has a
@@ -170,19 +170,19 @@ public class WindowsBackend implements Backend {
 					// when there are no more interfaces left.
 					res = SetupDiEnumDeviceInfo(device_info_set, i, devinfo_data);
 					if (!res) {
-						if (GetLastError()==ERROR_NO_MORE_ITEMS)
+						if (GetLastError() == ERROR_NO_MORE_ITEMS)
 							continue;
 						else
-							throw new RuntimeException("SetupDiEnumDeviceInfo resulted in error "+GetLastError());
-						}
+							throw new RuntimeException("SetupDiEnumDeviceInfo resulted in error " + GetLastError());
+					}
 
 					res = SetupDiGetDeviceRegistryPropertyA(device_info_set, devinfo_data, SPDRP_CLASS, null, driver_name, driver_name.length, null);
 					if (!res) {
-						if (GetLastError()==ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
+						if (GetLastError() == ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
 							continue;
 						else
-							throw new RuntimeException("SetupDiGetDeviceRegistryPropertyA for SPDRP_CLASS resulted in error "+GetLastError());
-						}
+							throw new RuntimeException("SetupDiGetDeviceRegistryPropertyA for SPDRP_CLASS resulted in error " + GetLastError());
+					}
 
 					//if (strcmp(driver_name, "HIDClass") == 0) {
 					if (true) {
@@ -191,8 +191,8 @@ public class WindowsBackend implements Backend {
 						res = SetupDiGetDeviceRegistryPropertyA(device_info_set, devinfo_data, SPDRP_DRIVER, null, driver_name, driver_name.length, null);
 						if (res) // ok, found a driver
 							break;
-						if (GetLastError()!=ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
-							throw new RuntimeException("SetupDiGetDeviceRegistryPropertyA for SPDRP_DRIVER resulted in error "+GetLastError());
+						if (GetLastError() != ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
+							throw new RuntimeException("SetupDiGetDeviceRegistryPropertyA for SPDRP_DRIVER resulted in error " + GetLastError());
 					}
 				}
 				String path = new String(device_interface_detail_data.DevicePath, "ascii");
@@ -206,50 +206,9 @@ public class WindowsBackend implements Backend {
 				attrib.Size = new NativeLong(attrib.size());
 				HidD_GetAttributes(devHandle, attrib);
 
-				if ((vendorId == 0x0 && productId == 0x0) || (attrib.VendorID == vendorId && attrib.ProductID == productId)) {
-					list.add(new HidDeviceInfo(path, devHandle, attrib));
+				list.add(new HidDeviceInfo(path, devHandle, attrib));
 
-					if (attrib.VendorID == 0x0810 && attrib.ProductID == 0x0005) {
-						System.out.println("BINGO");
-						HANDLE handle = open_device(path, false);
-						
-						byte[] desc=new byte[1000];
-						res=HidD_GetPhysicalDescriptor(handle,desc,desc.length);
-						System.out.println("HidD_GetPhysicalDescriptor "+res);
 
-						HIDP_PREPARSED_DATA[] pppd = new HIDP_PREPARSED_DATA[1];
-						res = HidD_GetPreparsedData(handle, pppd);
-						System.out.println("HidD_GetPreparsedData " + res);
-						HIDP_PREPARSED_DATA ppd = pppd[0];
-
-						short[] pvcnt = { 0 };
-						res = HidP_GetValueCaps(0, null, pvcnt, ppd);
-						int vcnt = pvcnt[0];
-						System.out.println("HidP_GetButtonCaps " + res + " " + vcnt);
-						
-						HIDP_VALUE_CAPS[] caps=new HIDP_VALUE_CAPS[vcnt];
-						res = HidP_GetValueCaps(0, caps, pvcnt, ppd);
-
-						int[] pcnt = { 0 };
-
-						res = HidP_GetLinkCollectionNodes(null, pcnt, ppd);
-						System.out.println("HidP_GetLinkCollectionNodes " + res);
-						int ncnt = pcnt[0];
-
-						System.out.println("ncnt " + ncnt);
-
-						HIDP_LINK_COLLECTION_NODE[] nodes = new HIDP_LINK_COLLECTION_NODE[ncnt];
-						res = HidP_GetLinkCollectionNodes(nodes, pcnt, ppd);
-						System.out.println("HidP_GetLinkCollectionNodes " + res);
-
-						traverse("", nodes, 0, ppd);
-
-						HidD_FreePreparsedData(ppd);
-						CloseHandle(handle);
-						System.exit(0);
-					}
-
-				}
 				CloseHandle(devHandle);
 				device_index++;
 			}
@@ -264,7 +223,7 @@ public class WindowsBackend implements Backend {
 	}
 
 	@Override
-	public purejavahidapi.HidDevice openDevice(String path,Frontend frontend) {
+	public purejavahidapi.HidDevice openDevice(String path, Frontend frontend) {
 		m_Frontend = frontend;
 		HANDLE handle = open_device(path, false);
 
@@ -275,7 +234,7 @@ public class WindowsBackend implements Backend {
 			return null;
 		}
 
-		return new HidDevice(path, handle,frontend);
+		return new HidDevice(path, handle, frontend);
 	}
 
 }

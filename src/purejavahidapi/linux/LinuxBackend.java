@@ -54,7 +54,7 @@ public class LinuxBackend implements Backend {
 	}
 
 	@Override
-	public List<purejavahidapi.HidDeviceInfo> enumerateDevices(short vendorId, short productId) {
+	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
 
 		List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
 
@@ -94,12 +94,6 @@ public class LinuxBackend implements Backend {
 				short pid = (short) Long.parseLong(hidId[2], 16);
 
 				if (bus != BUS_USB && bus != BUS_BLUETOOTH)
-					continue loop;
-
-				if ((vendorId != 0x0000 && vendorId != vid))
-					continue loop;
-
-				if ((productId != 0x0000 && productId != pid))
 					continue loop;
 
 				HidDeviceInfo info = new HidDeviceInfo(sysfs_path);

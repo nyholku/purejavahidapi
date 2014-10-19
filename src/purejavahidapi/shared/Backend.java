@@ -11,7 +11,7 @@ public interface Backend {
 
 	void cleanup();
 
-	List<HidDeviceInfo> enumerateDevices(short vendorId, short productId);
+	List<HidDeviceInfo> enumerateDevices();
 
 	HidDevice openDevice(String path, Frontend frontEnd) throws IOException;
 }

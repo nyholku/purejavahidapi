@@ -76,7 +76,7 @@ public class MacOsXBackend implements Backend {
 	}
 
 	@Override
-	public List<purejavahidapi.HidDeviceInfo> enumerateDevices(short vendorId, short productId) {
+	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
 		List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
 		processPendingEvents();
 

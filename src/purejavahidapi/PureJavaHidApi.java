@@ -65,26 +65,19 @@ public class PureJavaHidApi {
 	}
 
 	/**
-	 * Returns a list of USB HID devices that match the vendorId/productId criteria.
+	 * Returns a list of available USB HID devices.
 	 * <p>
 	 * Passing a 0 for the vendorId or productId mathes everything and thus works
 	 * as a wild card for mathcing. Passing 0 for both will return a list
 	 * of all USB HID devices.
 	 * 
-	 * @param vendorId  USB device vendor ID or 0 to match everything
-	 * @param productId USB device product ID or 0 to match everything
 	 * @return List of HidDeviceInfo objects representing the matching devices.
 	 */
-	public static List<HidDeviceInfo> enumerateDevices(int vendorId, int productId) {
-		if (vendorId != (short) vendorId)
-			throw new IllegalArgumentException("vendorId out of range");
-		if (productId != (short) productId)
-			throw new IllegalArgumentException("productId out of range");
-		
+	public static List<HidDeviceInfo> enumerateDevices() {
 		synchronized (m_Mutex) {
 			if (m_Backend==null)
 				throw new IllegalStateException("Unsupported platform");
-			return m_Backend.enumerateDevices((short)vendorId, (short)productId);
+			return m_Backend.enumerateDevices();
 		}
 	}
 
