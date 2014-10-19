@@ -27,7 +27,7 @@ Ability to read and parse the report descriptors (there is a semi decent parser 
 
 ### Documentation
 
-The definitive PureJavaHidApi reference is the <a href="http://nyholku.github.io/purejavahidapi/javadoc/index.html" targer="javadoc" > JavaDoc </a>.
+The definitive PureJavaHidApi reference is the <a href="http://nyholku.github.io/purejavahidapi/javadoc/index.html" target="javadoc" > JavaDoc </a>.
 
 ### Why HID?
 
@@ -39,7 +39,7 @@ Most HID devices (like Mouse, Keyboard etc) have specific APIs provided by the o
 
 However some device which are not really Human Interface Devices in the original intent of the USB HID standard nevertheless represent themselves as HID devices. Devices like ThinkGeek  USB Rocket Launcher or  Oregon Scientific WMR100 weather stations to name two. 
 
-It is spefifically for accessing these types of devices that PureJavaHidApi is aimed for.
+It is spefifically for accessing these types of devices that PureJavaHidApi is aimed ford.
 
 Now why do they represent represent themselves as HID devices?
 
@@ -57,10 +57,44 @@ PureJavaHidApi is by no means the only game in town, for example there is <a hre
 
 ### Code Example
 
+To list all available HID devices use code like:
 
+```java
+import purejavahidapi.*;
+...
+			List<HidDeviceInfo> list = PureJavaHidApi.enumerateDevices(0x0000,0x0000);
+			String path = null;
+			for (HidDeviceInfo info : list) {
+				System.out.printf("VID = 0x%04X PID = 0x%04X Manufacturer = %s Product = %s Path = %s\n", //
+						info.getVendorId(), //
+						info.getProductId(), //
+						info.getManufacturerString(), //
+						info.getProductString(), //
+						info.getPath());
+						}
+
+```
+
+To open a generic gamepad and attach and input report listener:
 
 ### Getting Started
 
+```java
+import purejavahidapi.*;
+
+			List<HidDeviceInfo> list = PureJavaHidApi.enumerateDevices(0x0810, 0x0005);
+			if (!list.isEmpty()) {
+				HidDeviceInfo info = list.get(0);
+				HidDevice dev = PureJavaHidApi.openDevice(info.getPath());
+				dev.setInputReportListener(new InputReportListener() {
+					@Override
+					public void onInputReport(HidDevice source, byte reportID, byte[] reportData, int reportLength) {
+						System.out.printf("onInputReport: reportID %d reportLength %d\n", reportID, reportLength);
+					}
+				});
+			}
+
+...
 
 
 
