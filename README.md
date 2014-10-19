@@ -7,15 +7,23 @@ PureJavaHidApi is written 100% in Java so it is easy for Java programmers to dev
 
 Native access to the underlaying operating system's USB device interface is provided by the wonderful JNA library which takes away all the pain of compiling and deploying native code.
 
+### Project Status
+
+In someways this is early days but the code is actual daily production use in the <a href="http://www.sparetimelabs.com/eazycnc/welcome/welcome.php"> EazyCNC Project </a> so there is some credibility.
+
 ### Supported Platforms
 
 * Windows
 * Mac OS X 
 * Linux
 
-### License 
+### Basic Functionality
 
-PureJavaHidApi is BSD licensed but please note it depends on JNA which is LGPL/ASL dual licensed.
+PureJavaHidApi provides the capability to enumare (find) and open attached USB HID devices and send and receive reports i.e. chucks of bytes.
+
+### Planned Functionality
+
+Ability to read and parse the report descriptors (there is a semi decent parser in <code>purejavahidapi.hidparser
 
 ### Documentation
 
@@ -46,6 +54,19 @@ HID devices are limited to transferring one 64 byte packet once each 1 msec or 6
 ### Alternatives
 
 PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java"> hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the crucial difference that it builds on the  C-library <a href="https://github.com/signal11/hidapi"> HIDAPI </a> which means that you need to solve the distribution and deployment of a native library along with your Java code.
+
+### Code Example
+
+
+
+### Getting Started
+
+
+
+
+### License 
+
+PureJavaHidApi is BSD licensed but please note it depends on JNA which is LGPL/ASL dual licensed.
 
 
 ### Acknowledgment 
