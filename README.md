@@ -1,3 +1,5 @@
+### Summary
+
 PureJavaHidApi is a crossplatform  Application Programmin Interface (API) for accessing USB HID devices from Java, so it is a library aimed at programmers, not end users.
 
 
@@ -5,9 +7,15 @@ PureJavaHidApi is written 100% in Java so it is easy for Java programmers to dev
 
 Native access to the underlaying operating system's USB device interface is provided by the wonderful JNA library which takes away all the pain of compiling and deploying native code.
 
+### License 
+
 PureJavaHidApi is BSD licensed but please note it depends on JNA which is LGPL/ASL dual licensed.
 
+### Documentation
+
 The definitive PureJavaHidApi reference is the <a href="nyholku.github.io/purejavahidapi/index.html"> JavaDoc </a>.
+
+### Why HID?
 
 Why would you like to use PureJavaHidApi to access HID devices?
 
@@ -29,13 +37,14 @@ So what is the catch?
 
 HID devices are limited to transferring one 64 byte packet once each 1 msec or 64000 bytes/sec each way. If you need more than that you have take an other route, I suggest you head over to <a href="http://libusb.info" libusb project </a>.
 
-PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java"> hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the crucial difference that it builds on the nice C-library <a href="https://github.com/signal11/hidapi"> HIDAPI </a> which means that need to solve the distribution and deployment of a native library. 
+### Alternatives
+
+PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java"> hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the crucial difference that it builds on the  C-library <a href="https://github.com/signal11/hidapi"> HIDAPI </a> which means that you need to solve the distribution and deployment of a native library along with your Java code.
 
 
+### Acknowledgment 
 
-Acknowledgment 
-
-While PureJavaHidApi is totally independent developement from the great <a href="http://www.signal11.us"> SIGNAL11 </a> HIDAPI a lot of the techical and intricate knowledge need to access HID devices we cherry picked ripe from that project which I gratefully acknowledge.
+While PureJavaHidApi is totally independent developement from the great <a href="https://github.com/signal11/hidapi"> HIDAPI </a>  by <a href="http://www.signal11.us"> SIGNAL11 </a> HIDAPI a lot of the techical and intricate knowledge need to access HID devices we cherry picked ripe from that project which I gratefully acknowledge.
 
 
 
