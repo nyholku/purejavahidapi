@@ -108,9 +108,24 @@ dev.setInputReportListener(new InputReportListener() {
 
 ### Getting Started
 
+
+All you need to do is to place the `jna.jar` ja `purejahidapi.jar` in your class path and start coding.
+
+You'll probably do this in an IDE but here is how to compile and run one of the examples from the commands line.
+
+Check out the whole project from github and and go to the examples directory and execute this:
+
+
 ```nix
 java -cp ../bin/purejavahidapi.jar:../lib/jna-4.0.0.jar Example1
 ```
+
+or this is if you are on Windows:
+
+```nix
+java -cp ..\bin\purejavahidapi.jar;..\lib\jna-4.0.0.jar Example1
+```
+
 
 ### License 
 
