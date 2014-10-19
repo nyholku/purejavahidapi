@@ -29,7 +29,14 @@ So what is the catch?
 
 HID devices are limited to transferring one 64 byte packet once each 1 msec or 64000 bytes/sec each way. If you need more than that you have take an other route, I suggest you head over to <a href="http://libusb.info" libusb project </a>.
 
-PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java"> hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the crucial difference that it builds on the nice C-library <a href=""> HIDAPI </a>
+PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java"> hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the crucial difference that it builds on the nice C-library <a href="https://github.com/signal11/hidapi"> HIDAPI </a> which means that need to solve the distribution and deployment of a native library. 
+
+
+
+Acknowledgment 
+
+While PureJavaHidApi is totally independent developement from the great <a href="http://www.signal11.us"> SIGNAL11 </a> HIDAPI a lot of the techical and intricate knowledge need to access HID devices we cherry picked ripe from that project which I gratefully acknowledge.
+
 
 
 
