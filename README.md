@@ -7,6 +7,12 @@ PureJavaHidApi is written 100% in Java so it is easy for Java programmers to dev
 
 Native access to the underlaying operating system's USB device interface is provided by the wonderful JNA library which takes away all the pain of compiling and deploying native code.
 
+### Supported Platforms
+
+* Windows
+* Mac OS X 
+* Linux
+
 ### License 
 
 PureJavaHidApi is BSD licensed but please note it depends on JNA which is LGPL/ASL dual licensed.
