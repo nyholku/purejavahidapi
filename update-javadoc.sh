@@ -2,7 +2,7 @@
 # Push javadoc files to a website hosted by github <http://pages.github.com/>.
 # Before executing this script, generate the javadoc files into build/docs/javadoc/.
 git checkout master || exit $?
-javadoc -d build/javadoc  -sourcepath src purejavahidapi
+javadoc -d build/javadoc  -sourcepath src purejavahidapi || exit $?
 git checkout gh-pages || exit $?
 # Clear out the old files:
 rm -rf javadoc/*
