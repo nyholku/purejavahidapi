@@ -9,7 +9,7 @@ Native access to the underlaying operating system's USB device interface is prov
 
 ### Project Status
 
-In someways this is early days but the code is actual daily production use in the <a href="http://www.sparetimelabs.com/eazycnc/welcome/welcome.php"> EazyCNC Project </a> so there is some credibility.
+In someways this is early days but the code is actual daily production use in the <a href="http://www.sparetimelabs.com/eazycnc/welcome/welcome.php" target ="eazycnc"> EazyCNC Project </a> so there is some credibility.
 
 ### Supported Platforms
 
@@ -23,11 +23,11 @@ PureJavaHidApi provides the capability to enumare (find) and open attached USB H
 
 ### Planned Functionality
 
-Ability to read and parse the report descriptors (there is a semi decent parser in <code>purejavahidapi.hidparser
+Ability to read and parse the report descriptors (there is a semi decent parser in <a href="https://github.com/nyholku/purejavahidapi/tree/master/src/purejavahidapi/hidparser" target="hidparser"> purejavahidapi.hidparser </a> but the ability to read raw descriptor still eludes me.
 
 ### Documentation
 
-The definitive PureJavaHidApi reference is the <a href="nyholku.github.io/purejavahidapi/index.html"> JavaDoc </a>.
+The definitive PureJavaHidApi reference is the <a href="http://nyholku.github.io/purejavahidapi/javadoc/index.html" targer="javadoc" > JavaDoc </a>.
 
 ### Why HID?
 
@@ -53,7 +53,7 @@ HID devices are limited to transferring one 64 byte packet once each 1 msec or 6
 
 ### Alternatives
 
-PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java"> hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the crucial difference that it builds on the  C-library <a href="https://github.com/signal11/hidapi"> HIDAPI </a> which means that you need to solve the distribution and deployment of a native library along with your Java code.
+PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java" target = "hid4java" > hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the crucial difference that it builds on the  C-library <a href="https://github.com/signal11/hidapi" target="hidapi"> HIDAPI </a> which means that you need to solve the distribution and deployment of a native library along with your Java code.
 
 ### Code Example
 
@@ -71,7 +71,7 @@ PureJavaHidApi is BSD licensed but please note it depends on JNA which is LGPL/A
 
 ### Acknowledgment 
 
-While PureJavaHidApi is totally independent developement from the great <a href="https://github.com/signal11/hidapi"> HIDAPI </a>  by <a href="http://www.signal11.us"> SIGNAL11 </a> HIDAPI a lot of the techical and intricate knowledge need to access HID devices we cherry picked ripe from that project which I gratefully acknowledge.
+While PureJavaHidApi is totally independent developement from the great <a href="https://github.com/signal11/hidapi" target="hidapi"> HIDAPI </a>  by <a href="http://www.signal11.us" target="signal11"> SIGNAL11 </a> HIDAPI a lot of the techical and intricate knowledge need to access HID devices we cherry picked ripe from that project which I gratefully acknowledge.
 
 
 
