@@ -29,6 +29,30 @@
  */
 package purejavahidapi;
 
+/**
+ * An InputReportListener gets called from background thread attached to a {@link HidDevice} 
+ * every time an input report is received from the tha associated USB device.
+ * <p>
+ * This is the only means of receiving input reports.
+ * <p>
+ * @author nyholku
+ *
+ */
 public interface InputReportListener {
+	/**
+	 * This method gets called when an input report is received.
+	 * 
+	 * Note that the reportData buffer maybe larger than the actual
+	 * report and thus contain garbage at the end.
+	 * 
+	 * THe buffer maybe re-used in the HidDevice object so do not
+	 * keep a reference to it, instead process the data as quickly
+	 * as possible and inside this call.
+	 *
+	 * @param source the HidDevice object that called this method
+	 * @param reportID the report Id number if used or zero
+	 * @param reportData the report data 
+	 * @param reportLength report length
+	 */
 	void onInputReport(HidDevice source,byte reportID,byte[] reportData,int reportLength);
 }

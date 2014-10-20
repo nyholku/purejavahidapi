@@ -29,6 +29,27 @@
  */
 package purejavahidapi;
 
+/**
+ * An InputReportListener gets called when a USB device is un-plugged.
+ * 
+ * @author nyholku
+ *
+ */
+
 public interface DeviceRemovalListener {
+	/**
+	 * This method is called when the USB device associated with the
+	 * the HidDevice that the listener to is attached goes off line i.e.
+	 * is unplugged.
+	 * <p>
+	 * This only happens if the device is open, so this not a mechanism
+	 * to listen to device removal events in general.
+	 * <p>
+	 * The call thread from which this call is made is un-specified and
+	 * platform dependent.
+	 * 
+	 * @param source the HidDevice object that called this method
+	 */
+
 	void onDeviceRemoval(HidDevice source);
 }
