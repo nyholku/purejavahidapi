@@ -3,13 +3,17 @@
 PureJavaHidApi is a crossplatform  Application Programmin Interface (API) for accessing USB HID devices from Java, so it is a library aimed at programmers, not end users.
 
 
-PureJavaHidApi is written 100% in Java so it is easy for Java programmers to develop and debug and it requires no native libraries. 
+PureJavaHidApi is written 100% in Java so it is easy for Java programmers to develop and debug and it requires no native libraries when deployed. 
 
 Native access to the underlaying operating system's USB device interface is provided by the wonderful JNA library which takes away all the pain of compiling and deploying native code.
 
 ### Project Status
 
 In someways this is early days but the code is actual daily production use in the <a href="http://www.sparetimelabs.com/eazycnc/welcome/welcome.php" target ="eazycnc"> EazyCNC Project </a> so there is some credibility.
+
+The basic input/output report functionality has been tested an all supported platforms and works but some of the less common features (like feature reports) have not been tested because of lack of suitable test hardware.
+
+At this stage some API breakage as the library matures towards simplicity maybe expected.
 
 ### Supported Platforms
 
@@ -23,7 +27,13 @@ PureJavaHidApi provides the capability to enumare (find) and open attached USB H
 
 ### Planned Functionality
 
-Ability to read and parse the report descriptors (there is a semi decent parser in <a href="https://github.com/nyholku/purejavahidapi/tree/master/src/purejavahidapi/hidparser" target="hidparser"> purejavahidapi.hidparser </a> but the ability to read raw descriptor still eludes me.
+* Ability to read and parse the report descriptors <sup>(1)</sup>
+
+* Persintent and sensical device path names for all platforms would be great!
+
+<sup>(1)</sup> 
+<sub> there is a semi decent parser in <a href="https://github.com/nyholku/purejavahidapi/tree/master/src/purejavahidapi/hidparser" target="hidparser"> purejavahidapi.hidparser </a> but the ability to read raw descriptor still eludes me.
+</sub>
 
 ### Documentation
 
