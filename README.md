@@ -65,7 +65,7 @@ HID devices are limited to transferring one 64 byte packet once each 1 msec or 6
 
 ### Why yet another HID library?
 
-PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java" target = "hid4java" > hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the crucial difference that it builds on the  C-library <a href="https://github.com/signal11/hidapi" target="hidapi"> HIDAPI </a> which means that you need to solve the distribution and deployment of a native library along with your Java code.
+PureJavaHidApi is by no means the only game in town, for example there is <a href="https://github.com/gary-rowe/hid4java" target = "hid4java" > hid4java </a> which incidentally uses JNA just like PureJavaHidApi with the difference that it builds on the  C-library <a href="https://github.com/signal11/hidapi" target="hidapi"> HIDAPI </a>, fortunately it handles the native library distribution and deployment for you, which is great as it can be a chore.
 
 ### Code Example
 
