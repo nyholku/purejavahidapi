@@ -1,4 +1,4 @@
-# H1 Pure Java HID-API
+# Pure Java HID-API
 
 ### Summary
 
