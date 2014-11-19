@@ -153,20 +153,24 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	synchronized public int setOutputReport(byte reportID, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		// In Linux write() to HID device data is preceded with the report number only if it non zero (ie numbered reports are used)
-		System.out.println("purejavahidapi.linux.HidDevice.setOutputReport() not tested!");
-		int wlen = length;
-		int offs = 0;
-		if (reportID != 0) {
-			wlen++;
-			offs = 1;
+		// In Linux write() to HID device data is preceded with the report number only if numbered reports are used
+		//
+		//   "The first byte of the buffer passed to write() should be set to the report
+		//   number.  If the device does not use numbered reports, the first byte should
+		//   be set to 0. The report data itself should begin at the second byte."
+		//
+		//   References:
+		//   - https://www.kernel.org/doc/Documentation/hid/hidraw.txt
+		//   - http://www.usb.org/developers/hidpage/HID1_11.pdf
+		if (m_UsesNumberedReports)
 			m_OutputReportBytes[0] = reportID;
-		}
-		System.arraycopy(data, 0, m_OutputReportBytes, offs, length);
-		int len = write(m_DeviceHandle, m_OutputReportBytes, wlen);
+		else
+			m_OutputReportBytes[0] = 0;
+		System.arraycopy(data, 0, m_OutputReportBytes, 1, length);
+		int len = write(m_DeviceHandle, m_OutputReportBytes, length + 1);
 		if (len < 0)
 			return len;
-		return len - offs;
+		return len - 1;
 	}
 
 	@Override
