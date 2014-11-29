@@ -64,7 +64,7 @@ If you are considering developing a USB device then incarnating it as a HID devi
 
 So what is the catch?
 
-HID devices are limited to transferring one 64 byte packet once each 1 msec or 64000 bytes/sec each way. If you need more than that you have take an other route, I suggest you head over to <a href="http://libusb.info" libusb project </a>.
+HID devices are limited to transferring one 64 byte packet once each 1 msec or 64000 bytes/sec each way. If you need more than that you have take an other route, I suggest you head over to <a href="http://libusb.info"> libusb project </a>.
 
 ### Why yet another HID library?
 
