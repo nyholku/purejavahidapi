@@ -135,7 +135,7 @@ Check out the whole project from github and and go to the examples directory and
 java -cp ../bin/purejavahidapi.jar:../lib/jna-4.0.0.jar Example1
 ```
 
-or this is if you are on Windows:
+or this if you are on Windows:
 
 ```
 java -cp ..\bin\purejavahidapi.jar;..\lib\jna-4.0.0.jar Example1
