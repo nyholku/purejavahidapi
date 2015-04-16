@@ -45,7 +45,7 @@ public interface InputReportListener {
 	 * Note that the reportData buffer maybe larger than the actual
 	 * report and thus contain garbage at the end.
 	 * 
-	 * THe buffer maybe re-used in the HidDevice object so do not
+	 * The buffer maybe re-used in the HidDevice object so do not
 	 * keep a reference to it, instead process the data as quickly
 	 * as possible and inside this call.
 	 *
