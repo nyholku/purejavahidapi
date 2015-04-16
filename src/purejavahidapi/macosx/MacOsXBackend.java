@@ -38,7 +38,6 @@ import java.util.List;
 
 import com.sun.jna.Pointer;
 
-import purejavahidapi.macosx.CoreFoundationLibrary.CFArrayRef;
 import purejavahidapi.macosx.CoreFoundationLibrary.CFSetRef;
 import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
 import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDManagerRef;
@@ -48,32 +47,8 @@ import static purejavahidapi.macosx.HidDevice.*;
 
 public class MacOsXBackend implements Backend {
 
-	// We  maintain an array of open HidDevices devices so that they don't accidentally get garbage collect
-	// and to be able to pass them to callbacks via integers camouflaged
-	// as pointers.
-	private static ArrayList<HidDevice> m_HidDevices = new ArrayList<HidDevice>(64);
 	/* package */static IOHIDManagerRef m_HidManager;
 
-	static int addHidDevice(HidDevice dev) {
-		int n = MacOsXBackend.m_HidDevices.size();
-		int i;
-		for (i = 0; i < n; i++) {
-			if (MacOsXBackend.m_HidDevices.get(i) == null)
-				break;
-		}
-		if (i >= MacOsXBackend.m_HidDevices.size())
-			MacOsXBackend.m_HidDevices.add(dev);
-		return i;
-	}
-
-	static void removeHidDevice(int Id) {
-		m_HidDevices.set(Id, null);
-	}
-
-	static HidDevice getHidDevice(Pointer ptr) {
-		int id = ptr == null ? 0 : (int) Pointer.nativeValue(ptr);
-		return m_HidDevices.get(id);
-	}
 
 	@Override
 	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
@@ -98,8 +73,8 @@ public class MacOsXBackend implements Backend {
 	}
 
 	@Override
-	public purejavahidapi.HidDevice openDevice(String path,Frontend frontend) {
-		return openFromPath(path,frontend);
+	public purejavahidapi.HidDevice openDevice(String path, Frontend frontend) {
+		return openFromPath(path, frontend);
 	}
 
 	public void cleanup() {
@@ -122,7 +97,7 @@ public class MacOsXBackend implements Backend {
 		}
 	}
 
-	static public HidDevice openFromPath(String path,Frontend frontend) {
+	static public HidDevice openFromPath(String path, Frontend frontend) {
 		HidDevice.processPendingEvents(); // FIXME why do we call this here???
 
 		CFSetRef device_set = IOHIDManagerCopyDevices(m_HidManager);
@@ -133,15 +108,17 @@ public class MacOsXBackend implements Backend {
 		CFSetGetValues(device_set, device_array);
 		for (int i = 0; i < num_devices; i++) {
 			IOHIDDeviceRef os_dev = new IOHIDDeviceRef(device_array[i]);
-
-			if (path.equals(HidDevice.createPathForDevide(os_dev))) {
+			String x=HidDevice.createPathForDevide(os_dev);
+			if (path.equals(x)) {
 				int ret = IOHIDDeviceOpen(os_dev, kIOHIDOptionsTypeNone);
 				if (ret == kIOReturnSuccess) {
 					CFRetain(os_dev);
-					final HidDevice dev = new HidDevice(os_dev,frontend);
 					CFRelease(device_set);
+					final HidDevice dev = new HidDevice(os_dev, frontend);
 
 					return dev;
+				} else {
+					System.out.printf("IOHIDDeviceOpen: %d,%d,%d\n",(ret>>(32-6))&0x3f,(ret>>(32-6-12)) & 0xFFF,ret & 0x3FFF);
 				}
 			}
 		}
