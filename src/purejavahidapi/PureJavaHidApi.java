@@ -99,7 +99,8 @@ public class PureJavaHidApi {
 					m_OpenDevices.remove(device);
 				}
 			});
-			m_OpenDevices.add(device);
+			if (device!=null)
+				m_OpenDevices.add(device);
 			return device;
 		}
 	}
