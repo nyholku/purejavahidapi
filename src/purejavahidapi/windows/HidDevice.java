@@ -126,12 +126,12 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 
-		m_StopThread=true;
+		m_StopThread = true;
 		m_Thread.interrupt();
 		CloseHandle(m_Handle);
 		m_SyncShutdown.waitAndSync();
 		m_Frontend.closeDevice(this);
-		m_Open=false;
+		m_Open = false;
 	}
 
 	@Override
@@ -212,15 +212,15 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			// In Windos ReadFile() from a HID device Windows expects us to attempt to read as much bytes as there are
 			// in the longest report plus one for the report number (even if not used) and the data is always
 			// preceded with the report number (even if not used in case of which it is zero)
-			if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, m_InputReportBytesRead, m_InputReportOverlapped)) {
+			if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, null, m_InputReportOverlapped)) {
 				if (GetLastError() != ERROR_IO_PENDING) {
 					CancelIo(m_Handle);
+					System.out.println("ReadFile failed with GetLastError()==" + GetLastError());
 				}
-				int res = WaitForSingleObject(m_InputReportOverlapped.hEvent, INFINITE);
-				if (res == WAIT_OBJECT_0) {
-					if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */))
-						System.out.println("FAIL GET OVERLAPPED");
-				}
+			}
+			
+			if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
+				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
 			}
 
 			if (m_InputReportBytesRead[0] > 0) {
