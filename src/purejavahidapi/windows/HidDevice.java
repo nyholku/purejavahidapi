@@ -91,7 +91,9 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			return;
 		}
 		m_OutputReportLength = caps.OutputReportByteLength;
-		m_OutputReportMemory = new Memory(m_OutputReportLength);
+		if(m_OutputReportLength > 0){
+			m_OutputReportMemory = new Memory(m_OutputReportLength);
+		}
 		m_OutputReportOverlapped = new OVERLAPPED();
 		m_OutputReportBytesWritten = new int[] { 0 };
 
@@ -138,6 +140,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	synchronized public int setOutputReport(byte reportID, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
+		if(m_OutputReportMemory == null)
+			throw new IllegalStateException("device has no allocated output memory!");
 		// In Windows writeFile() to HID device data has to be preceded with the report number, regardless 
 		m_OutputReportMemory.write(0, new byte[] { reportID }, 0, 1);
 		m_OutputReportMemory.write(1, data, 0, length);
