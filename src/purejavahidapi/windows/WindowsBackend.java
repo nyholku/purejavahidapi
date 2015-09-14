@@ -236,5 +236,19 @@ public class WindowsBackend implements Backend {
 
 		return new HidDevice(path, handle, frontend);
 	}
+	
+	@Override
+	public purejavahidapi.HidDevice openDevice(String path, Frontend frontend, long scanIntervalMs) {
+		m_Frontend = frontend;
+		HANDLE handle = open_device(path, false);
 
+		// Check validity of write_handle.
+		if (handle == INVALID_HANDLE_VALUE) {
+			// Unable to open the device.
+			// register_error(dev, "CreateFile");
+			return null;
+		}
+
+		return new HidDevice(path, handle, frontend, scanIntervalMs);
+	}
 }

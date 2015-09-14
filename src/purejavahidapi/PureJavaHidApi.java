@@ -104,6 +104,31 @@ public class PureJavaHidApi {
 			return device;
 		}
 	}
+	
+	/**
+	 * Given a device path opens a USB device for communication.
+	 * 
+	 * @param path A path obtained from a HidDeviceInfo object.
+	 * @param scanInterValMs The interval in units of ms in which the device state will be read. (Only implemented for Windows!)
+	 * @return An instance of HidDevice that can be used to communicate with the HID device.
+	 * @throws IOException if the device cannot be opened
+	 * @see HidDeviceInfo#getPath()
+	 */
+	public static HidDevice openDeviceNonBlocking(String path, long scanInterValMs) throws IOException {
+		synchronized (m_Mutex) {
+			if (m_Backend==null)
+				throw new IllegalStateException("Unsupported platform");
+			HidDevice device = m_Backend.openDevice(path, new Frontend() {
+				@Override
+				public void closeDevice(HidDevice device) {
+					m_OpenDevices.remove(device);
+				}
+			}, scanInterValMs);
+			if (device!=null)
+				m_OpenDevices.add(device);
+			return device;
+		}
+	}
 
 	static { 
 		if (Platform.isMac()) {

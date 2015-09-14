@@ -69,8 +69,14 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	private HidDeviceInfo m_HidDeviceInfo;
 	private InputReportListener m_InputReportListener;
 	private DeviceRemovalListener m_DeviceRemovalListener;
+	private final long m_ScanIntervalMs;
 
 	/* package */HidDevice(String path, HANDLE handle, Frontend frontend) {
+		this(path, handle, frontend, 0);
+	}
+	
+	/* package */HidDevice(String path, HANDLE handle, Frontend frontend, long scanIntervalMs) {
+		this.m_ScanIntervalMs = scanIntervalMs;
 		m_Frontend = frontend;
 		m_Handle = handle;
 		HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
@@ -209,7 +215,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	private void runReadOnBackground() {
 		m_SyncStart.waitAndSync();
-		while (!m_StopThread) {
+		while (!Thread.currentThread().isInterrupted() && !m_StopThread) {
 			m_InputReportBytesRead[0] = 0;
 			ResetEvent(m_InputReportOverlapped.hEvent);
 
@@ -223,10 +229,11 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				}
 			}
 			
-			if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
-				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
-			}
-
+			if(m_ScanIntervalMs <= 0)
+				scanBlocking();
+			else
+				scanNonBlocking();
+			
 			if (m_InputReportBytesRead[0] > 0) {
 				byte reportID = m_InputReportMemory.getByte(0);
 				int offs = 0;
@@ -242,6 +249,31 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 		}
 		m_SyncShutdown.waitAndSync();
+	}
+
+	private void scanBlocking() {
+		if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
+			System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
+		}
+	}
+
+	private void scanNonBlocking() {
+		while(!Thread.currentThread().isInterrupted() && !m_StopThread){
+			if(GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, false/* wait */)){
+				break;
+			}
+			if(GetLastError() == ERROR_IO_INCOMPLETE){
+//				System.out.println("GetOverlappedResult failed: with GetLastError()==IO INCOMPLETE! ");
+				try {
+					Thread.sleep(m_ScanIntervalMs);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					break;
+				}
+			} else {
+				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
+			}
+		}
 	}
 
 }
