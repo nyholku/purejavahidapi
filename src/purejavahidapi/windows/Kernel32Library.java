@@ -71,8 +71,8 @@ public class Kernel32Library {
 	public static final int ERROR_OPERATION_ABORTED = 995;
 
 	public static final int ERROR_IO_INCOMPLETE = 996;
-
 	public static final int ERROR_IO_PENDING = 997;
+	public static final int ERROR_PROCESS_ABORTED = 1167;
 
 	public static final int ERROR_BROKEN_PIPE = 109;
 

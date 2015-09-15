@@ -270,7 +270,13 @@ public class HidDevice implements purejavahidapi.HidDevice {
 					Thread.currentThread().interrupt();
 					break;
 				}
-			} else {
+			} else if(GetLastError() == ERROR_PROCESS_ABORTED){
+				System.out.println("GetOverlappedResult failed: with GetLastError()==PROCESS_ABORTED! ");
+				Thread.currentThread().interrupt();
+				m_StopThread = true;
+				break;
+			} 
+			else {
 				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
 			}
 		}
