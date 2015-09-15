@@ -137,7 +137,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		m_StopThread = true;
 		m_Thread.interrupt();
 		CloseHandle(m_Handle);
-		m_SyncShutdown.waitAndSync();
+		m_SyncShutdown.waitAndSync(500);
 		m_Frontend.closeDevice(this);
 		m_Open = false;
 	}
@@ -215,40 +215,42 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	private void runReadOnBackground() {
 		m_SyncStart.waitAndSync();
-		while (!Thread.currentThread().isInterrupted() && !m_StopThread) {
-			m_InputReportBytesRead[0] = 0;
-			ResetEvent(m_InputReportOverlapped.hEvent);
+		try {
+			while (!Thread.currentThread().isInterrupted() && !m_StopThread) {
+				m_InputReportBytesRead[0] = 0;
+				ResetEvent(m_InputReportOverlapped.hEvent);
 
-			// In Windos ReadFile() from a HID device Windows expects us to attempt to read as much bytes as there are
-			// in the longest report plus one for the report number (even if not used) and the data is always
-			// preceded with the report number (even if not used in case of which it is zero)
-			if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, null, m_InputReportOverlapped)) {
-				if (GetLastError() != ERROR_IO_PENDING) {
-					CancelIo(m_Handle);
-					System.out.println("ReadFile failed with GetLastError()==" + GetLastError());
+				// In Windos ReadFile() from a HID device Windows expects us to attempt to read as much bytes as there are
+				// in the longest report plus one for the report number (even if not used) and the data is always
+				// preceded with the report number (even if not used in case of which it is zero)
+				if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, null, m_InputReportOverlapped)) {
+					if (GetLastError() != ERROR_IO_PENDING) {
+						CancelIo(m_Handle);
+						System.out.println("ReadFile failed with GetLastError()==" + GetLastError());
+					}
+				}
+				
+				if(m_ScanIntervalMs <= 0)
+					scanBlocking();
+				else
+					scanNonBlocking();
+				
+				if (m_InputReportBytesRead[0] > 0) {
+					byte reportID = m_InputReportMemory.getByte(0);
+					int offs = 0;
+					if (reportID == 0x00) {
+						m_InputReportBytesRead[0]--;
+						offs = 1;
+					}
+					m_InputReportMemory.read(offs, m_InputReportBytes, 0, m_InputReportBytesRead[0]);
+
+					if (m_InputReportListener != null)
+						m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, m_InputReportBytesRead[0]);
 				}
 			}
-			
-			if(m_ScanIntervalMs <= 0)
-				scanBlocking();
-			else
-				scanNonBlocking();
-			
-			if (m_InputReportBytesRead[0] > 0) {
-				byte reportID = m_InputReportMemory.getByte(0);
-				int offs = 0;
-				if (reportID == 0x00) {
-					m_InputReportBytesRead[0]--;
-					offs = 1;
-				}
-				m_InputReportMemory.read(offs, m_InputReportBytes, 0, m_InputReportBytesRead[0]);
-
-				if (m_InputReportListener != null)
-					m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, m_InputReportBytesRead[0]);
-			}
-
+		} finally {
+			m_SyncShutdown.waitAndSync(500);
 		}
-		m_SyncShutdown.waitAndSync();
 	}
 
 	private void scanBlocking() {
@@ -270,14 +272,11 @@ public class HidDevice implements purejavahidapi.HidDevice {
 					Thread.currentThread().interrupt();
 					break;
 				}
-			} else if(GetLastError() == ERROR_PROCESS_ABORTED){
-				System.out.println("GetOverlappedResult failed: with GetLastError()==PROCESS_ABORTED! ");
+			} else {
+				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
 				Thread.currentThread().interrupt();
 				m_StopThread = true;
 				break;
-			} 
-			else {
-				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
 			}
 		}
 	}
