@@ -110,7 +110,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				}
 			}
 		}, m_HidDeviceInfo.getPath());
-		m_Thread.start();
+        	m_Thread.setDaemon(true);
+        	m_Thread.start();
 		m_SyncStart.waitAndSync();
 	}
 
