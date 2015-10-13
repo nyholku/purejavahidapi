@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.sparetimelabs</groupId>
+  <artifactId>purejavahidapi</artifactId>
+  <version>0.0.2</version>
+
+  <name>Pure Java HID-API</name>
+  <url>https://github.com/nyholku/purejavahidapi</url>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>4.0.0</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+        <extensions>
+            <extension>
+                <groupId>org.kuali.maven.wagons</groupId>
+                <artifactId>maven-s3-wagon</artifactId>
+                <version>1.2.1</version>
+            </extension>
+        </extensions>
+    </build>
+
+    <distributionManagement>
+        <site>
+            <id>s3.site</id>
+            <url>s3://maven.farmersfridge.com/site</url>
+        </site>
+        <repository>
+            <id>s3.release</id>
+            <url>s3://maven.farmersfridge.com/release</url>
+        </repository>
+        <snapshotRepository>
+            <id>s3.snapshot</id>
+            <url>s3://maven.farmersfridge.com/snapshot</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+</project>

@@ -110,7 +110,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				}
 			}
 		}, m_HidDeviceInfo.getPath());
-		m_Thread.start();
+        	m_Thread.setDaemon(true);
+        	m_Thread.start();
 		m_SyncStart.waitAndSync();
 	}
 
@@ -212,11 +213,13 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	{
 
+/*
 		for (int i = 0; i < size; i++) {
 			System.out.printf("0x%02X, ", report_descriptor[i]);
 			if ((i & 15) == 15)
 				System.out.println();
 		}
+*/
 		int i = 0;
 
 		int size_code;
@@ -231,7 +234,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				return true;
 			}
 
-			System.out.printf("key: %02x\n", 0xff & key);
+			//System.out.printf("key: %02x\n", 0xff & key);
 
 			if ((key & 0xf0) == 0xf0) {
 				/* This is a Long Item. The next byte contains the
