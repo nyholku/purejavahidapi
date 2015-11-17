@@ -96,6 +96,7 @@ public class HidDeviceInfo implements purejavahidapi.HidDeviceInfo {
 			m_Path = path;
 			m_VendorId = attrib.VendorID;
 			m_ProductId = attrib.ProductID;
+			m_ReleaseNumber = attrib.VersionNumber;
 
 			HIDP_CAPS caps = new HIDP_CAPS();
 
