@@ -61,7 +61,7 @@ public class WindowsBackend implements Backend {
 	static Kernel32Library.HANDLE open_device(String path, boolean enumerate) {
 		Kernel32Library.HANDLE handle;
 		int desired_access = (enumerate) ? 0 : (GENERIC_WRITE | GENERIC_READ);
-		int share_mode = (enumerate) ? FILE_SHARE_READ | FILE_SHARE_WRITE : FILE_SHARE_READ;
+		int share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 
 		handle = CreateFileA(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED,// FILE_ATTRIBUTE_NORMAL,
 				null);
@@ -236,5 +236,19 @@ public class WindowsBackend implements Backend {
 
 		return new HidDevice(path, handle, frontend);
 	}
+	
+	@Override
+	public purejavahidapi.HidDevice openDevice(String path, Frontend frontend, long scanIntervalMs) {
+		m_Frontend = frontend;
+		HANDLE handle = open_device(path, false);
 
+		// Check validity of write_handle.
+		if (handle == INVALID_HANDLE_VALUE) {
+			// Unable to open the device.
+			// register_error(dev, "CreateFile");
+			return null;
+		}
+
+		return new HidDevice(path, handle, frontend, scanIntervalMs);
+	}
 }

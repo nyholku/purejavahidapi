@@ -40,6 +40,10 @@ public class SyncPoint {
 	}
 
 	public boolean waitAndSync() {
+		return waitAndSync(0);
+	}
+	
+	public boolean waitAndSync(int timeoutMs) {
 		synchronized (m_Mutex) {
 			if (m_Tripped)
 				throw new IllegalStateException();
@@ -51,8 +55,14 @@ public class SyncPoint {
 				return true;
 			} else {
 				try {
-					while (!m_Tripped)
-						m_Mutex.wait();
+					if(timeoutMs > 0){
+						long deadline = System.currentTimeMillis() + timeoutMs;
+						while (!m_Tripped && System.currentTimeMillis() < deadline)
+							m_Mutex.wait(Math.max(0, deadline - System.currentTimeMillis()));
+					} else {
+						while (!m_Tripped)
+							m_Mutex.wait();
+					}
 				} catch (InterruptedException ie) {
 					Thread.currentThread().interrupt();
 				}

@@ -69,8 +69,14 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	private HidDeviceInfo m_HidDeviceInfo;
 	private InputReportListener m_InputReportListener;
 	private DeviceRemovalListener m_DeviceRemovalListener;
+	private final long m_ScanIntervalMs;
 
 	/* package */HidDevice(String path, HANDLE handle, Frontend frontend) {
+		this(path, handle, frontend, 0);
+	}
+	
+	/* package */HidDevice(String path, HANDLE handle, Frontend frontend, long scanIntervalMs) {
+		this.m_ScanIntervalMs = scanIntervalMs;
 		m_Frontend = frontend;
 		m_Handle = handle;
 		HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
@@ -91,7 +97,9 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			return;
 		}
 		m_OutputReportLength = caps.OutputReportByteLength;
-		m_OutputReportMemory = new Memory(m_OutputReportLength);
+		if(m_OutputReportLength > 0){
+			m_OutputReportMemory = new Memory(m_OutputReportLength);
+		}
 		m_OutputReportOverlapped = new OVERLAPPED();
 		m_OutputReportBytesWritten = new int[] { 0 };
 
@@ -129,7 +137,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		m_StopThread = true;
 		m_Thread.interrupt();
 		CloseHandle(m_Handle);
-		m_SyncShutdown.waitAndSync();
+		m_SyncShutdown.waitAndSync(500);
 		m_Frontend.closeDevice(this);
 		m_Open = false;
 	}
@@ -138,6 +146,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	synchronized public int setOutputReport(byte reportID, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
+		if(m_OutputReportMemory == null)
+			throw new IllegalStateException("device has no allocated output memory!");
 		// In Windows writeFile() to HID device data has to be preceded with the report number, regardless 
 		m_OutputReportMemory.write(0, new byte[] { reportID }, 0, 1);
 		m_OutputReportMemory.write(1, data, 0, length);
@@ -205,39 +215,70 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 	private void runReadOnBackground() {
 		m_SyncStart.waitAndSync();
-		while (!m_StopThread) {
-			m_InputReportBytesRead[0] = 0;
-			ResetEvent(m_InputReportOverlapped.hEvent);
+		try {
+			while (!Thread.currentThread().isInterrupted() && !m_StopThread) {
+				m_InputReportBytesRead[0] = 0;
+				ResetEvent(m_InputReportOverlapped.hEvent);
 
-			// In Windos ReadFile() from a HID device Windows expects us to attempt to read as much bytes as there are
-			// in the longest report plus one for the report number (even if not used) and the data is always
-			// preceded with the report number (even if not used in case of which it is zero)
-			if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, null, m_InputReportOverlapped)) {
-				if (GetLastError() != ERROR_IO_PENDING) {
-					CancelIo(m_Handle);
-					System.out.println("ReadFile failed with GetLastError()==" + GetLastError());
+				// In Windos ReadFile() from a HID device Windows expects us to attempt to read as much bytes as there are
+				// in the longest report plus one for the report number (even if not used) and the data is always
+				// preceded with the report number (even if not used in case of which it is zero)
+				if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, null, m_InputReportOverlapped)) {
+					if (GetLastError() != ERROR_IO_PENDING) {
+						CancelIo(m_Handle);
+						System.out.println("ReadFile failed with GetLastError()==" + GetLastError());
+					}
+				}
+				
+				if(m_ScanIntervalMs <= 0)
+					scanBlocking();
+				else
+					scanNonBlocking();
+				
+				if (m_InputReportBytesRead[0] > 0) {
+					byte reportID = m_InputReportMemory.getByte(0);
+					int offs = 0;
+					if (reportID == 0x00) {
+						m_InputReportBytesRead[0]--;
+						offs = 1;
+					}
+					m_InputReportMemory.read(offs, m_InputReportBytes, 0, m_InputReportBytesRead[0]);
+
+					if (m_InputReportListener != null)
+						m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, m_InputReportBytesRead[0]);
 				}
 			}
-			
-			if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
-				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
-			}
-
-			if (m_InputReportBytesRead[0] > 0) {
-				byte reportID = m_InputReportMemory.getByte(0);
-				int offs = 0;
-				if (reportID == 0x00) {
-					m_InputReportBytesRead[0]--;
-					offs = 1;
-				}
-				m_InputReportMemory.read(offs, m_InputReportBytes, 0, m_InputReportBytesRead[0]);
-
-				if (m_InputReportListener != null)
-					m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, m_InputReportBytesRead[0]);
-			}
-
+		} finally {
+			m_SyncShutdown.waitAndSync(500);
 		}
-		m_SyncShutdown.waitAndSync();
+	}
+
+	private void scanBlocking() {
+		if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
+			System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
+		}
+	}
+
+	private void scanNonBlocking() {
+		while(!Thread.currentThread().isInterrupted() && !m_StopThread){
+			if(GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, false/* wait */)){
+				break;
+			}
+			if(GetLastError() == ERROR_IO_INCOMPLETE){
+//				System.out.println("GetOverlappedResult failed: with GetLastError()==IO INCOMPLETE! ");
+				try {
+					Thread.sleep(m_ScanIntervalMs);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					break;
+				}
+			} else {
+				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
+				Thread.currentThread().interrupt();
+				m_StopThread = true;
+				break;
+			}
+		}
 	}
 
 }
