@@ -29,6 +29,8 @@
  */
 package purejavahidapi.macosx;
 
+import purejavahidapi.InputReportListener;
+import purejavahidapi.DeviceRemovalListener;
 import java.io.UnsupportedEncodingException;
 import java.nio.*;
 import java.util.Arrays;
@@ -40,7 +42,6 @@ import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
 
 import com.sun.jna.*;
 
-import purejavahidapi.*;
 import purejavahidapi.shared.Frontend;
 import purejavahidapi.shared.SyncPoint;
 

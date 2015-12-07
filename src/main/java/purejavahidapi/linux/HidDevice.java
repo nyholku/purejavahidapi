@@ -29,12 +29,13 @@
  */
 package purejavahidapi.linux;
 
+import purejavahidapi.InputReportListener;
+import purejavahidapi.DeviceRemovalListener;
 import java.io.IOException;
 import java.util.List;
 
 import com.sun.jna.Native;
 
-import purejavahidapi.*;
 import purejavahidapi.shared.Frontend;
 import purejavahidapi.shared.SyncPoint;
 import static purejavahidapi.linux.UdevLibrary.*;
@@ -110,6 +111,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				}
 			}
 		}, m_HidDeviceInfo.getPath());
+                m_Thread.setDaemon(true);
 		m_Thread.start();
 		m_SyncStart.waitAndSync();
 	}
