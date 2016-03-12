@@ -32,7 +32,6 @@ package purejavahidapi.macosx;
 import static purejavahidapi.macosx.CoreFoundationLibrary.*;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
