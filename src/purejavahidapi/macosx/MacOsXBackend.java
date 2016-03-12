@@ -55,6 +55,7 @@ public class MacOsXBackend implements Backend {
 		List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
 		processPendingEvents();
 
+		IOHIDManagerSetDeviceMatching(MacOsXBackend.m_HidManager, null);
 		CFSetRef device_set = IOHIDManagerCopyDevices(MacOsXBackend.m_HidManager);
 
 		int num_devices = (int) CFSetGetCount(device_set);
@@ -100,6 +101,7 @@ public class MacOsXBackend implements Backend {
 	static public HidDevice openFromPath(String path, Frontend frontend) {
 		HidDevice.processPendingEvents(); // FIXME why do we call this here???
 
+		IOHIDManagerSetDeviceMatching(MacOsXBackend.m_HidManager, null);
 		CFSetRef device_set = IOHIDManagerCopyDevices(m_HidManager);
 
 		int num_devices = (int) CFSetGetCount(device_set);
