@@ -91,10 +91,7 @@ public class WindowsBackend implements Backend {
 		int desired_access = (enumerate) ? 0 : (GENERIC_WRITE | GENERIC_READ);
 		int share_mode =  FILE_SHARE_READ | FILE_SHARE_WRITE;
 
-		handle = CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED,/*
-																										 * FILE_ATTRIBUTE_NORMAL
-																										 * ,
-																										 */null);
+		handle = CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED,null);
 
 		return handle;
 	}
