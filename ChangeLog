@@ -1,3 +1,8 @@
-Version 0.0.2
+Version 0.0.2 (19.3.2016)
 
-* 
+* First attempt at implementing device removal listener functionality for Windows
+* Fixed a bug that cause open to fail for device that had been un-plugged and then re-plugged in Mac OS X
+
+Version 0.0.1
+
+* First version
