@@ -149,7 +149,7 @@ PureJavaHidApi is BSD licensed but please note it depends on JNA which is LGPL/A
 
 ### Acknowledgment 
 
-While PureJavaHidApi is totally independent developement from the great <a href="https://github.com/signal11/hidapi" target="hidapi"> HIDAPI </a>  by <a href="http://www.signal11.us" target="signal11"> SIGNAL11 </a>  a lot of the technical and intricate knowledge needed to access HID devices we cherry picked ripe from that project which I gratefully acknowledge.
+While PureJavaHidApi is totally independent developement from the great <a href="https://github.com/signal11/hidapi" target="hidapi"> HIDAPI </a>  by <a href="http://www.signal11.us" target="signal11"> SIGNAL11 </a>  a lot of the technical and intricate knowledge needed to access HID devices were cherry picked ripe from that project which I gratefully acknowledge.
 
 
 
