@@ -28,7 +28,6 @@ public class Example2 {
 					@Override
 					public void onDeviceRemoval(HidDevice source) {
 						System.out.println("device removed");
-						dev.close();
 					}
 				});
 				dev.setInputReportListener(new InputReportListener() {
@@ -40,6 +39,8 @@ public class Example2 {
 						System.out.println();
 					}
 				});
+				while (true)
+					Thread.sleep(1000);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
