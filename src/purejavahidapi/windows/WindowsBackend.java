@@ -52,7 +52,7 @@ import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.HidLibrary.*;
 
 public class WindowsBackend implements Backend {
-	private final static String DEVICE_ID_SEPARATOR="\u2022"; // Unicode buller
+	private final static String DEVICE_ID_SEPARATOR = "\u2022"; // Unicode buller
 	private Frontend m_Frontend;
 	private LinkedList<HidDevice> m_OpenDevices = new LinkedList<HidDevice>();
 
@@ -66,36 +66,39 @@ public class WindowsBackend implements Backend {
 
 	}
 
-	/* package */ void closeDevice(HidDevice device) {
+	/* package */void closeDevice(HidDevice device) {
 		m_OpenDevices.remove(device);
 	}
 
-	/* package */ void deviceRemoved(String deviceId) {
+	/* package */void deviceRemoved(String deviceId) {
 		for (HidDevice device : m_OpenDevices) {
 			HidDeviceInfo info = device.getHidDeviceInfo();
-			String path=info.getPath();
-			String id=path.substring(path.indexOf(DEVICE_ID_SEPARATOR)+1);
+			String path = info.getPath();
+			String id = path.substring(path.indexOf(DEVICE_ID_SEPARATOR) + 1);
 			if (deviceId.equals(id)) {
-				DeviceRemovalListener listener=device.getDeviceRemovalListener();
+				DeviceRemovalListener listener = device.getDeviceRemovalListener();
 				device.close();
-				if (listener!=null)
+				if (listener != null)
 					listener.onDeviceRemoval(device);
 			}
 		}
 	}
 
-	/* package */ static HANDLE openDeviceHandle(String path, boolean enumerate) {
-		path=path.substring(0,path.indexOf(DEVICE_ID_SEPARATOR));
-		
+	/* package */static HANDLE openDeviceHandle(String path, boolean enumerate) {
+		path = path.substring(0, path.indexOf(DEVICE_ID_SEPARATOR));
+
 		HANDLE handle;
 		int desired_access = (enumerate) ? 0 : (GENERIC_WRITE | GENERIC_READ);
-		int share_mode = (enumerate) ? FILE_SHARE_READ | FILE_SHARE_WRITE : FILE_SHARE_READ;
+		int share_mode = (enumerate) ? FILE_SHARE_READ : FILE_SHARE_READ | FILE_SHARE_WRITE;
 
-		handle = CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED,/* FILE_ATTRIBUTE_NORMAL, */null);
+		handle = CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED,/*
+																										 * FILE_ATTRIBUTE_NORMAL
+																										 * ,
+																										 */null);
 
 		return handle;
 	}
-		
+
 	static public void reportLastError() {
 		int rc = Native.getLastError();
 		if (rc != 0)
@@ -133,21 +136,21 @@ public class WindowsBackend implements Backend {
 			SetupDiEnumDeviceInfo(device_info_set, deviceIndex, devinfo_data);
 			if (SetupDiGetDeviceInstanceId(device_info_set, devinfo_data, deviceIdChars, deviceIdChars.length, deviceIdLen)) {
 				deviceId = new String(deviceIdChars);
-			} else 
-				reportLastError();			
-			
-			int[] parent={devinfo_data.DevInst};
-			while (CM_Get_Parent(parent,parent[0],0)==0 ) {
-				int[] parentIdLen={0};
-				if (CM_Get_Device_ID_Size(parentIdLen, parent[0], 0)!=CR_SUCCESS)
-					reportLastError();			
+			} else
+				reportLastError();
+
+			int[] parent = { devinfo_data.DevInst };
+			while (CM_Get_Parent(parent, parent[0], 0) == 0) {
+				int[] parentIdLen = { 0 };
+				if (CM_Get_Device_ID_Size(parentIdLen, parent[0], 0) != CR_SUCCESS)
+					reportLastError();
 				parentIdLen[0]++;
-				char[] parentIdChars=new char[parentIdLen[0]];
-				if (CM_Get_Device_ID(parent[0],parentIdChars,parentIdLen[0],0)!=CR_SUCCESS)
-					reportLastError();			
-				String parentId=new String(parentIdChars,0,parentIdLen[0]-1);
+				char[] parentIdChars = new char[parentIdLen[0]];
+				if (CM_Get_Device_ID(parent[0], parentIdChars, parentIdLen[0], 0) != CR_SUCCESS)
+					reportLastError();
+				String parentId = new String(parentIdChars, 0, parentIdLen[0] - 1);
 				if (parentId.startsWith("USB\\")) {
-					deviceId=parentId;
+					deviceId = parentId;
 					break;
 				}
 			}
@@ -158,19 +161,19 @@ public class WindowsBackend implements Backend {
 
 				res = SetupDiEnumDeviceInterfaces(device_info_set, null, InterfaceClassGuid, deviceIndex, device_interface_data);
 
-				if (!res) 
+				if (!res)
 					break;
 
 				res = SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, null, 0, required_size, null);
-				if (!res && GetLastError() != ERROR_INSUFFICIENT_BUFFER) 
+				if (!res && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 					throw new RuntimeException("SetupDiGetDeviceIntehrfaceDetailA resulted in error " + GetLastError());
-				
+
 				device_interface_detail_data = new SP_DEVICE_INTERFACE_DETAIL_DATA_A(required_size[0]);
 
 				// get the device path
 				res = SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null);
 
-				if (!res) 
+				if (!res)
 					throw new RuntimeException("SetupDiGetDeviceInterfaceDetail resulted in error " + GetLastError());
 
 				// Make sure this device is of Setup Class "HIDClass" and has a driver bound to it.
@@ -192,9 +195,10 @@ public class WindowsBackend implements Backend {
 							throw new RuntimeException("SetupDiGetDeviceRegistryPropertyA for SPDRP_CLASS resulted in error " + GetLastError());
 					}
 
-					int driverNameLen=0;
-					while (driverNameChars[driverNameLen++]!=0);
-					String drivername=new String(driverNameChars,0,driverNameLen-1);
+					int driverNameLen = 0;
+					while (driverNameChars[driverNameLen++] != 0)
+						;
+					String drivername = new String(driverNameChars, 0, driverNameLen - 1);
 					if ("HIDClass".equals(drivername)) {
 						// if (strcmp(driver_name, "HIDClass") == 0) {
 						// See if there's a driver bound.
@@ -206,9 +210,9 @@ public class WindowsBackend implements Backend {
 					}
 				}
 				String path = new String(device_interface_detail_data.DevicePath);
-				path += DEVICE_ID_SEPARATOR+deviceId;
+				path += DEVICE_ID_SEPARATOR + deviceId;
 				devHandle = openDeviceHandle(path, true);
-				if (devHandle == INVALID_HANDLE_VALUE) 
+				if (devHandle == INVALID_HANDLE_VALUE)
 					break;
 
 				HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
@@ -234,7 +238,7 @@ public class WindowsBackend implements Backend {
 		m_Frontend = frontend;
 		HANDLE handle = openDeviceHandle(path, false);
 
-		if (handle == INVALID_HANDLE_VALUE) 
+		if (handle == INVALID_HANDLE_VALUE)
 			return null;
 
 		HidDevice device = new HidDevice(path, handle, frontend);
