@@ -38,10 +38,9 @@ import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
 import com.sun.jna.Union;
-import com.sun.jna.ptr.NativeLongByReference;
 import com.sun.jna.win32.StdCallLibrary;
 
-import static purejavahidapi.windows.Kernel32Library.HANDLE;
+import static purejavahidapi.windows.WinDef.HANDLE;
 
 public class HidLibrary {
 	static HidLibraryInterface INSTANCE = (HidLibraryInterface) Native.loadLibrary("hid", HidLibraryInterface.class);

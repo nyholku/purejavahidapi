@@ -30,12 +30,13 @@
 package purejavahidapi.windows;
 
 import static purejavahidapi.windows.HidLibrary.*;
-import static purejavahidapi.windows.SetUpApiLibrary.HIDP_STATUS_SUCCESS;
+import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
 
 import java.nio.ByteBuffer;
 
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
+import purejavahidapi.windows.WinDef.HANDLE;
 
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
@@ -90,8 +91,9 @@ public class HidDeviceInfo implements purejavahidapi.HidDeviceInfo {
 	public short getUsagePage() {
 		return m_UsagePage;
 	}
+	
 
-	public HidDeviceInfo(String path,Kernel32Library.HANDLE handle, HIDD_ATTRIBUTES attrib) {
+	public HidDeviceInfo(String path,HANDLE handle, HIDD_ATTRIBUTES attrib) {
 		try {
 			m_Path = path;
 			m_VendorId = attrib.VendorID;

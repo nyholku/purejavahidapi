@@ -32,15 +32,21 @@ package purejavahidapi.windows;
 import java.util.Arrays;
 import java.util.List;
 
+import purejavahidapi.windows.WinDef.HANDLE;
+import purejavahidapi.windows.WinDef.HMODULE;
+import purejavahidapi.windows.WinDef.OVERLAPPED;
+import purejavahidapi.windows.WinDef.SECURITY_ATTRIBUTES;
+
 import com.sun.jna.FromNativeContext;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary;
+import com.sun.jna.win32.W32APIOptions;
 
 public class Kernel32Library {
-	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.loadLibrary("kernel32", Kernel32Interface.class);
+	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.loadLibrary("kernel32", Kernel32Interface.class,W32APIOptions.UNICODE_OPTIONS);
 
 	public static final int ERROR_INSUFFICIENT_BUFFER = 122;
 	public static final int ERROR_NO_MORE_ITEMS = 259;
@@ -79,14 +85,14 @@ public class Kernel32Library {
 	public static final int ERROR_MORE_DATA = 234;
 
 	public static final int ERROR_FILE_NOT_FOUND = 2;
+	
+	public static final int ERROR_DEVICE_NOT_CONNECTED = 1167;
 
 	public interface Kernel32Interface extends StdCallLibrary {
 
-		HANDLE CreateFileA(String name, int access, int sharing, Kernel32Library.SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template);
+		HANDLE CreateFile(String name, int access, int sharing, SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template);
 
-		boolean CloseHandle(Kernel32Library.HANDLE hFile);
-
-		int GetLastError();
+		boolean CloseHandle(HANDLE hFile);
 
 		boolean CancelIo(HANDLE hFile);
 
@@ -96,152 +102,56 @@ public class Kernel32Library {
 
 		boolean WriteFile(HANDLE hFile, Pointer buf, int wrn, int[] nwrtn, OVERLAPPED lpOverlapped);
 
-
 		boolean ReadFile(HANDLE hFile, Pointer buf, int rdn, int[] nrd, OVERLAPPED lpOverlapped);
 
-
 		boolean GetOverlappedResult(HANDLE hFile, OVERLAPPED lpOverlapped, int[] lpNumberOfBytesTransferred, boolean bWait);
-	}
+	
+	    HMODULE GetModuleHandle(String name);
+}
 
-	public static class HANDLE extends PointerType {
-		private boolean immutable;
 
-		public HANDLE() {
-		}
-
-		public HANDLE(Pointer p) {
-			setPointer(p);
-			immutable = true;
-		}
-
-		public Object fromNative(Object nativeValue, FromNativeContext context) {
-			Object o = super.fromNative(nativeValue, context);
-			if (SetUpApiLibrary.NULL.equals(o))
-				return SetUpApiLibrary.NULL;
-			if (SetUpApiLibrary.INVALID_HANDLE_VALUE.equals(o))
-				return SetUpApiLibrary.INVALID_HANDLE_VALUE;
-			return o;
-		}
-
-		public void setPointer(Pointer p) {
-			if (immutable) {
-				throw new UnsupportedOperationException("immutable");
-			}
-
-			super.setPointer(p);
-		}
-	}
-
-	public static class OVERLAPPED extends Structure {
-
-		private static boolean TRACE;
-
-		public Pointer Internal;
-
-		public Pointer InternalHigh;
-
-		public int Offset;
-
-		public int OffsetHigh;
-
-		public HANDLE hEvent;
-
-		@Override
-		protected List getFieldOrder() {
-
-			return Arrays.asList("Internal",//
-
-					"InternalHigh",//
-
-					"Offset",//
-
-					"OffsetHigh",//
-
-					"hEvent"//
-
-			);
-
-		}
-
-		public OVERLAPPED() {
-
-			setAutoSynch(false);
-
-		}
-
-		public String toString() {
-
-			return String.format(//
-
-					"[Offset %d OffsetHigh %d hEvent %s]",//
-
-					Offset, OffsetHigh, hEvent.toString());
-
-		}
-
-	}
-
-	public static class SECURITY_ATTRIBUTES extends Structure {
-		public int nLength;
-		public Pointer lpSecurityDescriptor;
-		public boolean bInheritHandle;
-
-		@Override
-		protected List<String> getFieldOrder() {
-			return Arrays.asList("nLength",//
-					"lpSecurityDescriptor",//
-					"bInheritHandle"//
-			);
-		}
-	}
-
-	static public Kernel32Library.HANDLE CreateFileA(String name, int access, int sharing, Kernel32Library.SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template) {
-		Kernel32Library.HANDLE h = INSTANCE.CreateFileA(name, access, sharing, security, create, attribs, template);
+	public static HANDLE CreateFile(String name, int access, int sharing, SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template) {
+		HANDLE h = INSTANCE.CreateFile(name, access, sharing, security, create, attribs, template);
 		return h;
 	}
 
-	static public boolean CloseHandle(Kernel32Library.HANDLE hFile) {
+	public static boolean CloseHandle(HANDLE hFile) {
 		return INSTANCE.CloseHandle(hFile);
 	}
 
-	static public int GetLastError() {
-		return INSTANCE.GetLastError();
+	public static int GetLastError() {
+		return Native.getLastError();
 	}
 
-	static public boolean CancelIo(HANDLE hFile) {
+	public static boolean CancelIo(HANDLE hFile) {
 		return INSTANCE.CancelIo(hFile);
 
 	}
 
-	static public int WaitForSingleObject(HANDLE hHandle, int dwMilliseconds) {
+	public static int WaitForSingleObject(HANDLE hHandle, int dwMilliseconds) {
 		return INSTANCE.WaitForSingleObject(hHandle, dwMilliseconds);
 	}
 
-	static public boolean ResetEvent(HANDLE hEvent) {
+	public static boolean ResetEvent(HANDLE hEvent) {
 		return INSTANCE.ResetEvent(hEvent);
-
 	}
-
-
+	
 	// This can be used with synchronous as well as overlapped writes
 
-	static public boolean WriteFile(HANDLE hFile, Pointer buf, int wrn, int[] nwrtn, OVERLAPPED overlapped) {
-
+	public static boolean WriteFile(HANDLE hFile, Pointer buf, int wrn, int[] nwrtn, OVERLAPPED overlapped) {
 		return INSTANCE.WriteFile(hFile, buf, wrn, nwrtn, overlapped);
-
 	}
 
-
-	static public boolean ReadFile(HANDLE hFile, Pointer buf, int rdn, int[] nrd, OVERLAPPED overlapped) {
-
+	public static boolean ReadFile(HANDLE hFile, Pointer buf, int rdn, int[] nrd, OVERLAPPED overlapped) {
 		return INSTANCE.ReadFile(hFile, buf, rdn, nrd, overlapped);
-
 	}
 
-
-	static public boolean GetOverlappedResult(HANDLE hFile, OVERLAPPED ovl, int[] ntfrd, boolean wait) {
+	public static boolean GetOverlappedResult(HANDLE hFile, OVERLAPPED ovl, int[] ntfrd, boolean wait) {
 		return INSTANCE.GetOverlappedResult(hFile, ovl, ntfrd, wait);
 	}
 
+	public static HMODULE GetModuleHandle(String name) {
+		return INSTANCE.GetModuleHandle( name);
+	}
 
 }

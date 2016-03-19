@@ -50,11 +50,11 @@ public class SyncPoint {
 				m_Mutex.notifyAll();
 				return true;
 			} else {
-				try {
-					while (!m_Tripped)
+				while (!m_Tripped) {
+					try {
 						m_Mutex.wait();
-				} catch (InterruptedException ie) {
-					Thread.currentThread().interrupt();
+					} catch (InterruptedException ie) {
+					}
 				}
 
 				m_Count--;

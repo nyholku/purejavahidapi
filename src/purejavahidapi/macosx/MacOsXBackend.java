@@ -48,7 +48,6 @@ public class MacOsXBackend implements Backend {
 
 	/* package */static IOHIDManagerRef m_HidManager;
 
-
 	@Override
 	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
 		List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
@@ -100,7 +99,6 @@ public class MacOsXBackend implements Backend {
 	static public HidDevice openFromPath(String path, Frontend frontend) {
 		HidDevice.processPendingEvents(); // FIXME why do we call this here???
 
-		IOHIDManagerSetDeviceMatching(MacOsXBackend.m_HidManager, null);
 		CFSetRef device_set = IOHIDManagerCopyDevices(m_HidManager);
 
 		int num_devices = (int) CFSetGetCount(device_set);
@@ -109,7 +107,7 @@ public class MacOsXBackend implements Backend {
 		CFSetGetValues(device_set, device_array);
 		for (int i = 0; i < num_devices; i++) {
 			IOHIDDeviceRef os_dev = new IOHIDDeviceRef(device_array[i]);
-			String x=HidDevice.createPathForDevide(os_dev);
+			String x = HidDevice.createPathForDevide(os_dev);
 			if (path.equals(x)) {
 				int ret = IOHIDDeviceOpen(os_dev, kIOHIDOptionsTypeNone);
 				if (ret == kIOReturnSuccess) {
@@ -119,7 +117,7 @@ public class MacOsXBackend implements Backend {
 
 					return dev;
 				} else {
-					System.out.printf("IOHIDDeviceOpen: %d,%d,%d\n",(ret>>(32-6))&0x3f,(ret>>(32-6-12)) & 0xFFF,ret & 0x3FFF);
+					System.out.printf("IOHIDDeviceOpen: %d,%d,%d\n", (ret >> (32 - 6)) & 0x3f, (ret >> (32 - 6 - 12)) & 0xFFF, ret & 0x3FFF);
 				}
 			}
 		}

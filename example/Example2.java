@@ -6,6 +6,12 @@ public class Example2 {
 
 	public static void main(String[] args) {
 		try {
+			
+			
+			
+			
+			//System.exit(0);
+			
 			List<HidDeviceInfo> devList = PureJavaHidApi.enumerateDevices();
 			HidDeviceInfo devInfo = null;
 			for (HidDeviceInfo info : devList) {
@@ -17,7 +23,14 @@ public class Example2 {
 			if (devInfo == null)
 				System.err.println("device not found");
 			else {
-				HidDevice dev = PureJavaHidApi.openDevice(devInfo.getPath());
+				final HidDevice dev = PureJavaHidApi.openDevice(devInfo.getPath());
+				dev.setDeviceRemovalListener(new DeviceRemovalListener() {
+					@Override
+					public void onDeviceRemoval(HidDevice source) {
+						System.out.println("device removed");
+						dev.close();
+					}
+				});
 				dev.setInputReportListener(new InputReportListener() {
 					@Override
 					public void onInputReport(HidDevice source, byte Id, byte[] data, int len) {

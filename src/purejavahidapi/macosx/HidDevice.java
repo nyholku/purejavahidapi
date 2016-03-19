@@ -34,7 +34,6 @@ import java.nio.*;
 import java.util.Arrays;
 import java.util.Hashtable;
 
-
 import static purejavahidapi.macosx.CoreFoundationLibrary.*;
 import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
 
@@ -92,15 +91,18 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
 		m_MaxInputReportLength = getIntProperty(dev, CFSTR(kIOHIDMaxInputReportSizeKey));
-		m_InputReportBuffer = new Memory(m_MaxInputReportLength);
-		m_InputReportData = new byte[m_MaxInputReportLength];
+		if (m_MaxInputReportLength > 0) {
+			m_InputReportBuffer = new Memory(m_MaxInputReportLength);
+			m_InputReportData = new byte[m_MaxInputReportLength];
+		}
 
 		m_HidDeviceInfo = new HidDeviceInfo(dev);
 
 		String str = String.format("HIDAPI_0x%08x", Pointer.nativeValue(dev.getPointer()));
 		m_CFRunLoopMode = CFStringCreateWithCString(null, str, kCFStringEncodingASCII);
 
-		IOHIDDeviceRegisterInputReportCallback(dev, m_InputReportBuffer, m_MaxInputReportLength, m_HidReportCallBack, asPointerForPassingToCallback()); // shoudl pass dev
+		if (m_MaxInputReportLength > 0)
+			IOHIDDeviceRegisterInputReportCallback(dev, m_InputReportBuffer, m_MaxInputReportLength, m_HidReportCallBack, asPointerForPassingToCallback()); // shoudl pass dev
 
 		IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, m_HidDeviceRemovalCallback, asPointerForPassingToCallback());
 
@@ -141,7 +143,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 				// Wait here until close()  makes it past the call to CFRunLoopWakeUp(). 
 
-				m_SyncShutdown.waitAndSync();
+				if (!m_Disconnected)
+					m_SyncShutdown.waitAndSync();
 
 			}
 		}, m_HidDeviceInfo.getPath());
@@ -234,15 +237,18 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		public void hid_device_removal_callback(Pointer context, int result, Pointer sender, IOHIDDeviceRef dev_ref) {
 			HidDevice dev = m_DevFromCallback.get(this);
 			if (dev != null) {
+				dev.m_Disconnected = true;
+				dev.close();
 				if (dev.m_DeviceRemovalListener != null)
 					dev.m_DeviceRemovalListener.onDeviceRemoval(dev);
 			} else
-				System.out.println("HidDeviceRemovalCallback: could not get the HidDevice object");
+				System.err.println("HidDeviceRemovalCallback could not get the HidDevice object");
 		}
 	}
 
 	static class HidReportCallback implements IOHIDReportCallback {
 		public void callback(Pointer context, int result, Pointer sender, int reportType, int reportID, Pointer report, NativeLong report_length) {
+			//System.out.println("HidReportCallback "+Thread.currentThread().getName());
 			HidDevice dev = m_DevFromCallback.get(this);
 			if (dev != null) {
 				if (dev.m_InputReportListener != null) {
@@ -251,18 +257,14 @@ public class HidDevice implements purejavahidapi.HidDevice {
 					dev.m_InputReportListener.onInputReport(dev, (byte) reportID, dev.m_InputReportData, length);
 				}
 			} else
-				System.out.println("HidReportCallback: could not get the HidDevice object");
+				System.err.println("HidReportCallback could not get the HidDevice object");
 		}
 	}
 
 	static private class PerformSignalCallback implements CFRunLoopPerformCallBack {
 		@Override
 		public void callback(Pointer context) {
-			HidDevice dev = m_DevFromCallback.get(this);
-			if (dev != null)
-				CFRunLoopStop(dev.m_CFRunLoopRef);
-			else
-				System.out.println("PerformSignalCallback: could not get the HidDevice object");
+			CFRunLoopStop(CFRunLoopGetCurrent());
 		}
 	}
 
@@ -313,46 +315,38 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 
-		m_StopThread = true;
 		// Disconnect the report callback before close. 
-		if (!m_Disconnected) {
-			IOHIDDeviceClose(m_IOHIDDeviceRef, kIOHIDOptionsTypeNone);
-		}
-		if (false && !m_Disconnected) {
-			// according to the following link unregistering callbacks is not safe ???
-			// https://github.com/signal11/hidapi/issues/116	
+		// according to the following link unregistering callbacks is not safe ???
+		// https://github.com/signal11/hidapi/issues/116	
 
-			//IOHIDDeviceRegisterInputReportCallback(m_IOHIDDeviceRef, m_InputReportBuffer, m_MaxInputReportLength, null, asPointerForPassingToCallback());
-			IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, null, asPointerForPassingToCallback());
-			IOHIDDeviceUnscheduleFromRunLoop(m_IOHIDDeviceRef, m_CFRunLoopRef, m_CFRunLoopMode);
-			IOHIDDeviceScheduleWithRunLoop(m_IOHIDDeviceRef, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
+		IOHIDDeviceRegisterInputReportCallback(m_IOHIDDeviceRef, m_InputReportBuffer, m_MaxInputReportLength, null, null);
+		IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, null, null);
+		IOHIDDeviceUnscheduleFromRunLoop(m_IOHIDDeviceRef, m_CFRunLoopRef, m_CFRunLoopMode);
+		IOHIDDeviceScheduleWithRunLoop(m_IOHIDDeviceRef, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
 
-		}
-
-		// Cause read_thread() to stop. 
-
+		m_StopThread = true;
 		// Wake up the run thread's event loop so that the thread can exit. 
 		CFRunLoopSourceSignal(m_CFRunLoopSourceRef);
 		CFRunLoopWakeUp(m_CFRunLoopRef);
 
-		// Notify the read thread that it can shut down now. 
-		m_SyncShutdown.waitAndSync();
+		if (Thread.currentThread() != m_Thread) {
+			// Notify the read thread that it can shut down now. 
+			m_SyncShutdown.waitAndSync();
 
-		// Wait for the tread to close down
-		try {
-			m_Thread.join();
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
+			// Wait for the tread to close down
+			try {
+				m_Thread.join();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
 		}
-		/*
-		*/
 
-		// Close the OS handle to the device, but only if it's not been
-		// unplugged. If it's been unplugged, then calling IOHIDDeviceClose()
-		// will crash.
-		//		if (!m_Disconnected) {
-		//			IOHIDDeviceClose(m_IOHIDDeviceRef, kIOHIDOptionsTypeNone);
-		//		}
+		IOHIDDeviceClose(m_IOHIDDeviceRef, kIOHIDOptionsTypeSeizeDevice);
+
+		if (m_CFRunLoopMode != null)
+			CFRelease(m_CFRunLoopMode);
+		if (m_CFRunLoopSourceRef != null)
+			CFRelease(m_CFRunLoopSourceRef);
 
 		CFRelease(m_IOHIDDeviceRef);
 
@@ -363,8 +357,6 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		m_Frontend.closeDevice(this);
 
 		m_Open = false;
-		/*
-		*/
 	}
 
 	@Override

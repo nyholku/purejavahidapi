@@ -31,7 +31,7 @@ package purejavahidapi.windows;
 
 import static purejavahidapi.windows.HidLibrary.*;
 import static purejavahidapi.windows.Kernel32Library.*;
-import static purejavahidapi.windows.SetUpApiLibrary.*;
+import static purejavahidapi.windows.SetupApiLibrary.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -47,7 +47,8 @@ import purejavahidapi.shared.Frontend;
 import purejavahidapi.shared.SyncPoint;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
-import purejavahidapi.windows.Kernel32Library.HANDLE;
+import purejavahidapi.windows.WinDef.HANDLE;
+import purejavahidapi.windows.WinDef.OVERLAPPED;
 
 public class HidDevice implements purejavahidapi.HidDevice {
 	private boolean m_Open = true;
@@ -91,14 +92,17 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			return;
 		}
 		m_OutputReportLength = caps.OutputReportByteLength;
-		m_OutputReportMemory = new Memory(m_OutputReportLength);
+		if (m_OutputReportLength>0) 
+			m_OutputReportMemory = new Memory(m_OutputReportLength);
 		m_OutputReportOverlapped = new OVERLAPPED();
 		m_OutputReportBytesWritten = new int[] { 0 };
 
 		m_InputReportLength = caps.InputReportByteLength;
 		m_InputReportOverlapped = new OVERLAPPED();
-		m_InputReportMemory = new Memory(m_InputReportLength);
-		m_InputReportBytes = new byte[m_InputReportLength];
+		if (m_InputReportLength > 0) {
+			m_InputReportMemory = new Memory(m_InputReportLength);
+			m_InputReportBytes = new byte[m_InputReportLength];
+		}
 		m_InputReportBytesRead = new int[] { 0 };
 
 		HidD_FreePreparsedData(ppd[0]);
@@ -116,8 +120,10 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				}
 			}
 		}, m_HidDeviceInfo.getPath());
-		m_Thread.start();
-		m_SyncStart.waitAndSync();
+		if (m_InputReportLength > 0) {
+			m_Thread.start();
+			m_SyncStart.waitAndSync();
+		}
 
 	}
 
@@ -127,9 +133,11 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			throw new IllegalStateException("device not open");
 
 		m_StopThread = true;
-		m_Thread.interrupt();
+		if (m_InputReportLength > 0) {
+			m_Thread.interrupt();
+			m_SyncShutdown.waitAndSync();
+		}
 		CloseHandle(m_Handle);
-		m_SyncShutdown.waitAndSync();
 		m_Frontend.closeDevice(this);
 		m_Open = false;
 	}
@@ -138,6 +146,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	synchronized public int setOutputReport(byte reportID, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
+		if (m_OutputReportLength==0)
+			throw new IllegalArgumentException("this device supportst no output reports");
 		// In Windows writeFile() to HID device data has to be preceded with the report number, regardless 
 		m_OutputReportMemory.write(0, new byte[] { reportID }, 0, 1);
 		m_OutputReportMemory.write(1, data, 0, length);
@@ -213,13 +223,17 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			// in the longest report plus one for the report number (even if not used) and the data is always
 			// preceded with the report number (even if not used in case of which it is zero)
 			if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, null, m_InputReportOverlapped)) {
+				if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
+					break;  // early exit if the device disappears
 				if (GetLastError() != ERROR_IO_PENDING) {
 					CancelIo(m_Handle);
 					System.out.println("ReadFile failed with GetLastError()==" + GetLastError());
 				}
 			}
-			
+
 			if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
+				if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
+					break; // early exit if the device disappears
 				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
 			}
 
@@ -240,4 +254,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		m_SyncShutdown.waitAndSync();
 	}
 
+	/* package */DeviceRemovalListener getDeviceRemovalListener() {
+		return m_DeviceRemovalListener;
+	}
 }

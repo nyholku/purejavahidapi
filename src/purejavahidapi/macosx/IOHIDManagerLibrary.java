@@ -43,6 +43,7 @@ public class IOHIDManagerLibrary {
 	private static IOHIDManagerLib INSTANCE = (IOHIDManagerLib) Native.loadLibrary("IOKit", IOHIDManagerLib.class);
 
 	public static final int kIOHIDOptionsTypeNone = 0;
+	public static final int kIOHIDOptionsTypeSeizeDevice = 1;
 
 	public static final String kIOHIDTransportKey = "Transport";
 	public static final String kIOHIDVendorIDKey = "VendorID";
