@@ -39,8 +39,6 @@ import com.sun.jna.IntegerType;
 import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
-import com.sun.jna.platform.win32.BaseTSD.LONG_PTR;
-import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.win32.StdCallLibrary.StdCallCallback;
 
 public class WinDef {
@@ -105,6 +103,20 @@ public class WinDef {
 		}
 	}
 
+	public static class LONG_PTR extends IntegerType {
+        public LONG_PTR() {
+            this(0);
+        }
+
+        public LONG_PTR(long value) {
+            super(Pointer.SIZE, value);
+        }
+
+        public Pointer toPointer() {
+            return Pointer.createConstant(longValue());
+        }
+    }
+	
 	public static class LPARAM extends LONG_PTR {
 		public LPARAM() {
 			this(0);

@@ -61,7 +61,7 @@ public class PureJavaHidApi {
 	 * @return PureJavaHidApi library version string
 	 */
 	public String getVersion() {
-		return "0.0.2";
+		return "0.0.3";
 	}
 
 	/**

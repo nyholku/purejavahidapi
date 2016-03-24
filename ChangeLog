@@ -1,3 +1,7 @@
+Version 0.0.3 (24.3.2016)
+
+Removed a dangling reference jna platform.jar
+
 Version 0.0.2 (19.3.2016)
 
 * First attempt at implementing device removal listener functionality for Windows
