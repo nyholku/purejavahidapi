@@ -27,7 +27,7 @@ public class Example2 {
 				dev.setDeviceRemovalListener(new DeviceRemovalListener() {
 					@Override
 					public void onDeviceRemoval(HidDevice source) {
-						System.out.println("device removed");
+						System.out.println("onDeviceRemoval");
 					}
 				});
 				dev.setInputReportListener(new InputReportListener() {
@@ -39,8 +39,6 @@ public class Example2 {
 						System.out.println();
 					}
 				});
-				while (true)
-					Thread.sleep(1000);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

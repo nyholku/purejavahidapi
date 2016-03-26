@@ -45,15 +45,13 @@ import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
 
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
-import com.sun.jna.Pointer;
-
+ 
 import static purejavahidapi.windows.SetupApiLibrary.*;
 import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.HidLibrary.*;
 
 public class WindowsBackend implements Backend {
 	private final static String DEVICE_ID_SEPARATOR = "\u2022"; // Unicode buller
-	private Frontend m_Frontend;
 	private LinkedList<HidDevice> m_OpenDevices = new LinkedList<HidDevice>();
 
 	@Override
@@ -89,24 +87,26 @@ public class WindowsBackend implements Backend {
 
 		HANDLE handle;
 		int desired_access = (enumerate) ? 0 : (GENERIC_WRITE | GENERIC_READ);
-		int share_mode =  FILE_SHARE_READ | FILE_SHARE_WRITE;
+		int share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 
-		handle = CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED,null);
+		handle = CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, null);
 
 		return handle;
 	}
 
 	static public void reportLastError() {
 		int rc = Native.getLastError();
-		if (rc != 0)
-			System.err.println("GetLastError() == " + rc);
+		if (rc != 0) {
+			StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
+			String message = String.format("GetLastError() == %d at %s:%d\n", rc, ste.getFileName(), ste.getLineNumber());
+			throw new RuntimeException(message);
+		}
 	}
 
 	@Override
 	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
 
 		try {
-			boolean res;
 			List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
 
 			GUID InterfaceClassGuid = new GUID(0x4d1e55b2, 0xf16f, 0x11cf, 0x88, 0xcb, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30);
@@ -125,71 +125,45 @@ public class WindowsBackend implements Backend {
 			// Get information for all the devices belonging to the HID class.
 			device_info_set = SetupDiGetClassDevs(InterfaceClassGuid, null, null, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 
-			// Iterate over each device in the HID class, looking for the right one.
-
-			char[] deviceIdChars = new char[255];
-			int[] deviceIdLen = { 0 };
-			String deviceId = null;
-			SetupDiEnumDeviceInfo(device_info_set, deviceIndex, devinfo_data);
-			if (SetupDiGetDeviceInstanceId(device_info_set, devinfo_data, deviceIdChars, deviceIdChars.length, deviceIdLen)) {
-				deviceId = new String(deviceIdChars);
-			} else
-				reportLastError();
-
-			int[] parent = { devinfo_data.DevInst };
-			while (CM_Get_Parent(parent, parent[0], 0) == 0) {
-				int[] parentIdLen = { 0 };
-				if (CM_Get_Device_ID_Size(parentIdLen, parent[0], 0) != CR_SUCCESS)
-					reportLastError();
-				parentIdLen[0]++;
-				char[] parentIdChars = new char[parentIdLen[0]];
-				if (CM_Get_Device_ID(parent[0], parentIdChars, parentIdLen[0], 0) != CR_SUCCESS)
-					reportLastError();
-				String parentId = new String(parentIdChars, 0, parentIdLen[0] - 1);
-				if (parentId.startsWith("USB\\")) {
-					deviceId = parentId;
-					break;
-				}
-			}
+			// Iterate over each device in the HID class
 
 			for (;;) {
 				HANDLE devHandle = INVALID_HANDLE_VALUE;
+
+				if (!SetupDiEnumDeviceInterfaces(device_info_set, null, InterfaceClassGuid, deviceIndex, device_interface_data)) {
+					if (GetLastError() == ERROR_NO_MORE_ITEMS)
+						break;
+					reportLastError();
+				}
+				;
+
 				int[] required_size = { 0 };
-
-				res = SetupDiEnumDeviceInterfaces(device_info_set, null, InterfaceClassGuid, deviceIndex, device_interface_data);
-
-				if (!res)
-					break;
-
-				res = SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, null, 0, required_size, null);
-				if (!res && GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-					throw new RuntimeException("SetupDiGetDeviceIntehrfaceDetailA resulted in error " + GetLastError());
+				if (!SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, null, 0, required_size, null)) {
+					if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+						reportLastError();
+				}
 
 				device_interface_detail_data = new SP_DEVICE_INTERFACE_DETAIL_DATA_A(required_size[0]);
 
 				// get the device path
-				res = SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null);
 
-				if (!res)
-					throw new RuntimeException("SetupDiGetDeviceInterfaceDetail resulted in error " + GetLastError());
+				if (!SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null))
+					reportLastError();
 
 				// Make sure this device is of Setup Class "HIDClass" and has a driver bound to it.
+				boolean dfound = false;
 				for (i = 0;; i++) {
 					char[] driverNameChars = new char[256];
-					res = SetupDiEnumDeviceInfo(device_info_set, i, devinfo_data);
-					if (!res) {
+					if (!SetupDiEnumDeviceInfo(device_info_set, i, devinfo_data)) {
 						if (GetLastError() == ERROR_NO_MORE_ITEMS)
 							break;
-						else
-							throw new RuntimeException("SetupDiEnumDeviceInfo resulted in error " + GetLastError());
+						reportLastError();
 					}
 
-					res = SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_CLASS, null, driverNameChars, driverNameChars.length, null);
-					if (!res) {
+					if (!SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_CLASS, null, driverNameChars, driverNameChars.length, null)) {
 						if (GetLastError() == ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
 							continue;
-						else
-							throw new RuntimeException("SetupDiGetDeviceRegistryPropertyA for SPDRP_CLASS resulted in error " + GetLastError());
+						reportLastError();
 					}
 
 					int driverNameLen = 0;
@@ -197,28 +171,52 @@ public class WindowsBackend implements Backend {
 						;
 					String drivername = new String(driverNameChars, 0, driverNameLen - 1);
 					if ("HIDClass".equals(drivername)) {
-						// if (strcmp(driver_name, "HIDClass") == 0) {
-						// See if there's a driver bound.
-						res = SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_DRIVER, null, driverNameChars, driverNameChars.length, null);
-						if (res) // ok, found a driver
+						if (SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_DRIVER, null, driverNameChars, driverNameChars.length, null)) {// ok, found a driver
+							dfound = true;
 							break;
+						}
 						if (GetLastError() != ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
-							throw new RuntimeException("SetupDiGetDeviceRegistryPropertyA for SPDRP_DRIVER resulted in error " + GetLastError());
+							reportLastError();
 					}
 				}
-				String path = new String(device_interface_detail_data.DevicePath);
-				path += DEVICE_ID_SEPARATOR + deviceId;
-				devHandle = openDeviceHandle(path, true);
-				if (devHandle == INVALID_HANDLE_VALUE)
-					break;
+				if (dfound) {
+					char[] deviceIdChars = new char[256];
+					int[] deviceIdLen = { 0 };
+					if (SetupDiGetDeviceInstanceId(device_info_set, devinfo_data, deviceIdChars, deviceIdChars.length, deviceIdLen))
+						reportLastError();
 
-				HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
-				attrib.Size = new NativeLong(attrib.size());
-				HidD_GetAttributes(devHandle, attrib);
+					String deviceId = new String(deviceIdChars);
 
-				list.add(new HidDeviceInfo(path, devHandle, attrib));
+					int[] parent = { devinfo_data.DevInst };
+					while (CM_Get_Parent(parent, parent[0], 0) == 0) {
+						int[] parentIdLen = { 0 };
+						if (CM_Get_Device_ID_Size(parentIdLen, parent[0], 0) != CR_SUCCESS)
+							reportLastError();
+						parentIdLen[0]++;
+						char[] parentIdChars = new char[parentIdLen[0]];
+						if (CM_Get_Device_ID(parent[0], parentIdChars, parentIdLen[0], 0) != CR_SUCCESS)
+							reportLastError();
+						String parentId = new String(parentIdChars, 0, parentIdLen[0] - 1);
+						if (parentId.startsWith("USB\\")) {
+							deviceId = parentId;
+							break;
+						}
+					}
 
-				CloseHandle(devHandle);
+					String path = new String(device_interface_detail_data.DevicePath);
+					path += DEVICE_ID_SEPARATOR + deviceId;
+					devHandle = openDeviceHandle(path, true);
+					if (devHandle == INVALID_HANDLE_VALUE)
+						break;
+
+					HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
+					attrib.Size = new NativeLong(attrib.size());
+					HidD_GetAttributes(devHandle, attrib);
+
+					list.add(new HidDeviceInfo(path, devHandle, attrib));
+
+					CloseHandle(devHandle);
+				}
 				deviceIndex++;
 			}
 
@@ -232,7 +230,6 @@ public class WindowsBackend implements Backend {
 
 	@Override
 	public purejavahidapi.HidDevice openDevice(String path, Frontend frontend) {
-		m_Frontend = frontend;
 		HANDLE handle = openDeviceHandle(path, false);
 
 		if (handle == INVALID_HANDLE_VALUE)

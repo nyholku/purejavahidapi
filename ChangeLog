@@ -1,6 +1,10 @@
+Version 0.0.4 (26.3.2016)
+
+* Fixed a bug in Windows device enumeration which on some system prevented DeviceRemovalListener from being called
+
 Version 0.0.3 (24.3.2016)
 
-Removed a dangling reference jna platform.jar
+* Removed a dangling reference JNA platform.jar
 
 Version 0.0.2 (19.3.2016)
 
