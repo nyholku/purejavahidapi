@@ -45,7 +45,7 @@ import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
 
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
- 
+
 import static purejavahidapi.windows.SetupApiLibrary.*;
 import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.HidLibrary.*;
@@ -105,7 +105,6 @@ public class WindowsBackend implements Backend {
 
 	@Override
 	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
-
 		try {
 			List<purejavahidapi.HidDeviceInfo> list = new LinkedList<purejavahidapi.HidDeviceInfo>();
 
@@ -151,42 +150,33 @@ public class WindowsBackend implements Backend {
 					reportLastError();
 
 				// Make sure this device is of Setup Class "HIDClass" and has a driver bound to it.
-				boolean dfound = false;
-				for (i = 0;; i++) {
-					char[] driverNameChars = new char[256];
-					if (!SetupDiEnumDeviceInfo(device_info_set, i, devinfo_data)) {
-						if (GetLastError() == ERROR_NO_MORE_ITEMS)
-							break;
-						reportLastError();
-					}
+				char[] driverNameChars = new char[256];
+				if (!SetupDiEnumDeviceInfo(device_info_set, deviceIndex, devinfo_data)) {
+					reportLastError();
+					continue;
+				}
 
-					if (!SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_CLASS, null, driverNameChars, driverNameChars.length, null)) {
-						if (GetLastError() == ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
-							continue;
-						reportLastError();
-					}
+				if (!SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_CLASS, null, driverNameChars, driverNameChars.length, null)) {
+					reportLastError();
+					continue;
+				}
 
-					int driverNameLen = 0;
-					while (driverNameChars[driverNameLen++] != 0)
-						;
-					String drivername = new String(driverNameChars, 0, driverNameLen - 1);
-					if ("HIDClass".equals(drivername)) {
-						if (SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_DRIVER, null, driverNameChars, driverNameChars.length, null)) {// ok, found a driver
-							dfound = true;
-							break;
-						}
+				int driverNameLen = 0;
+				while (driverNameChars[driverNameLen++] != 0)
+					;
+				String drivername = new String(driverNameChars, 0, driverNameLen - 1);
+				if ("HIDClass".equals(drivername)) {
+					if (!SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_DRIVER, null, driverNameChars, driverNameChars.length, null)) {// ok, found a driver
 						if (GetLastError() != ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
 							reportLastError();
+						continue;
 					}
-				}
-				if (dfound) {
 					char[] deviceIdChars = new char[256];
 					int[] deviceIdLen = { 0 };
-					if (SetupDiGetDeviceInstanceId(device_info_set, devinfo_data, deviceIdChars, deviceIdChars.length, deviceIdLen))
+					if (!SetupDiGetDeviceInstanceId(device_info_set, devinfo_data, deviceIdChars, deviceIdChars.length, deviceIdLen))
 						reportLastError();
 
 					String deviceId = new String(deviceIdChars);
-
 					int[] parent = { devinfo_data.DevInst };
 					while (CM_Get_Parent(parent, parent[0], 0) == 0) {
 						int[] parentIdLen = { 0 };
@@ -212,7 +202,6 @@ public class WindowsBackend implements Backend {
 					HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
 					attrib.Size = new NativeLong(attrib.size());
 					HidD_GetAttributes(devHandle, attrib);
-
 					list.add(new HidDeviceInfo(path, devHandle, attrib));
 
 					CloseHandle(devHandle);
