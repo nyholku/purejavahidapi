@@ -1,3 +1,7 @@
+Version 0.0.5 (9.4.2016)
+
+* Fixed an other in Windows device enumeration which on some system prevented DeviceRemovalListener from being called
+
 Version 0.0.4 (26.3.2016)
 
 * Fixed a bug in Windows device enumeration which on some system prevented DeviceRemovalListener from being called
