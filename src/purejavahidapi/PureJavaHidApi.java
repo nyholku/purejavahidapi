@@ -67,8 +67,8 @@ public class PureJavaHidApi {
 	/**
 	 * Returns a list of available USB HID devices.
 	 * <p>
-	 * Passing a 0 for the vendorId or productId mathes everything and thus works
-	 * as a wild card for mathcing. Passing 0 for both will return a list
+	 * Passing a 0 for the vendorId or productId macthes everything and thus works
+	 * as a wild card for matching. Passing 0 for both will return a list
 	 * of all USB HID devices.
 	 * 
 	 * @return List of HidDeviceInfo objects representing the matching devices.
