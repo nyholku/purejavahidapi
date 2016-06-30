@@ -46,7 +46,7 @@ import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
 public class Kernel32Library {
-	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.loadLibrary("kernel32", Kernel32Interface.class,W32APIOptions.UNICODE_OPTIONS);
+	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.loadLibrary("kernel32", Kernel32Interface.class, W32APIOptions.UNICODE_OPTIONS);
 
 	public static final int ERROR_INSUFFICIENT_BUFFER = 122;
 	public static final int ERROR_NO_MORE_ITEMS = 259;
@@ -85,8 +85,12 @@ public class Kernel32Library {
 	public static final int ERROR_MORE_DATA = 234;
 
 	public static final int ERROR_FILE_NOT_FOUND = 2;
-	
+
 	public static final int ERROR_DEVICE_NOT_CONNECTED = 1167;
+
+	public static final int IOCTL_HID_GET_FEATURE = 0xb0192;
+	
+	public static final int IOCTL_HID_SET_FEATURE = 0xb0191;
 
 	public interface Kernel32Interface extends StdCallLibrary {
 
@@ -105,10 +109,11 @@ public class Kernel32Library {
 		boolean ReadFile(HANDLE hFile, Pointer buf, int rdn, int[] nrd, OVERLAPPED lpOverlapped);
 
 		boolean GetOverlappedResult(HANDLE hFile, OVERLAPPED lpOverlapped, int[] lpNumberOfBytesTransferred, boolean bWait);
-	
-	    HMODULE GetModuleHandle(String name);
-}
 
+		HMODULE GetModuleHandle(String name);
+
+		boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped);
+	}
 
 	public static HANDLE CreateFile(String name, int access, int sharing, SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template) {
 		HANDLE h = INSTANCE.CreateFile(name, access, sharing, security, create, attribs, template);
@@ -135,7 +140,7 @@ public class Kernel32Library {
 	public static boolean ResetEvent(HANDLE hEvent) {
 		return INSTANCE.ResetEvent(hEvent);
 	}
-	
+
 	// This can be used with synchronous as well as overlapped writes
 
 	public static boolean WriteFile(HANDLE hFile, Pointer buf, int wrn, int[] nwrtn, OVERLAPPED overlapped) {
@@ -151,7 +156,10 @@ public class Kernel32Library {
 	}
 
 	public static HMODULE GetModuleHandle(String name) {
-		return INSTANCE.GetModuleHandle( name);
+		return INSTANCE.GetModuleHandle(name);
 	}
 
+	public static boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped) {
+		return INSTANCE.DeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
+	}
 }
