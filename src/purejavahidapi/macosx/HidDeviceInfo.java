@@ -34,55 +34,8 @@ import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
 import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
 import static purejavahidapi.macosx.HidDevice.*;
 
-public class HidDeviceInfo implements purejavahidapi.HidDeviceInfo {
-	private String m_Path;
-	private short m_VendorId;
-	private short m_ProductId;
-	private short m_ReleaseNumber;
-	private short m_UsagePage;
-	private String m_SerialNumberString;
-	private String m_ManufactureString;
-	private String m_ProductString;
+public class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
-	@Override
-	public String getPath() {
-		return m_Path;
-	}
-
-	@Override
-	public short getVendorId() {
-		return m_VendorId;
-	}
-
-	@Override
-	public short getProductId() {
-		return m_ProductId;
-	}
-
-	@Override
-	public short getReleaseNumber() {
-		return m_ReleaseNumber;
-	}
-
-	@Override
-	public String getManufacturerString() {
-		return m_ManufactureString;
-	}
-
-	@Override
-	public String getProductString() {
-		return m_ProductString;
-	}
-
-	@Override
-	public String getSerialNumberString() {
-		return m_SerialNumberString;
-	}
-
-	@Override
-	public short getUsagePage() {
-		return m_UsagePage;
-	}
 
 	public HidDeviceInfo(IOHIDDeviceRef dev) {
 		m_ProductId = (short) getIntProperty(dev, CFSTR(kIOHIDProductIDKey));

@@ -44,7 +44,7 @@ import purejavahidapi.shared.Backend;
 import purejavahidapi.shared.Frontend;
 import static purejavahidapi.macosx.HidDevice.*;
 
-public class MacOsXBackend implements Backend {
+public class MacOsXBackend extends Backend {
 
 	/* package */static IOHIDManagerRef m_HidManager;
 
@@ -72,8 +72,35 @@ public class MacOsXBackend implements Backend {
 	}
 
 	@Override
-	public purejavahidapi.HidDevice openDevice(String path, Frontend frontend) {
-		return openFromPath(path, frontend);
+	public purejavahidapi.HidDevice openDevice(purejavahidapi.HidDeviceInfo deviceInfo) {
+		return new HidDevice((HidDeviceInfo) deviceInfo, this);
+	}
+
+	/* package */IOHIDDeviceRef getIOHIDDeviceRef(String path) {
+		HidDevice.processPendingEvents(); // FIXME why do we call this here???
+
+		CFSetRef device_set = IOHIDManagerCopyDevices(m_HidManager);
+
+		int num_devices = (int) CFSetGetCount(device_set);
+		Pointer[] device_array = new Pointer[(int) num_devices];
+
+		CFSetGetValues(device_set, device_array);
+		for (int i = 0; i < num_devices; i++) {
+			IOHIDDeviceRef os_dev = new IOHIDDeviceRef(device_array[i]);
+			String x = createPathForDevide(os_dev);
+			if (path.equals(x)) {
+				int ret = IOHIDDeviceOpen(os_dev, kIOHIDOptionsTypeNone);
+				if (ret == kIOReturnSuccess) {
+					CFRetain(os_dev);
+					CFRelease(device_set);
+					return os_dev;
+				} else {
+					System.out.printf("IOHIDDeviceOpen: %d,%d,%d\n", (ret >> (32 - 6)) & 0x3f, (ret >> (32 - 6 - 12)) & 0xFFF, ret & 0x3FFF);
+				}
+			}
+		}
+		CFRelease(device_set);
+		return null;
 	}
 
 	public void cleanup() {
@@ -94,35 +121,6 @@ public class MacOsXBackend implements Backend {
 			IOHIDManagerScheduleWithRunLoop(m_HidManager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 			//tryToReadTheDescriptor();
 		}
-	}
-
-	static public HidDevice openFromPath(String path, Frontend frontend) {
-		HidDevice.processPendingEvents(); // FIXME why do we call this here???
-
-		CFSetRef device_set = IOHIDManagerCopyDevices(m_HidManager);
-
-		int num_devices = (int) CFSetGetCount(device_set);
-		Pointer[] device_array = new Pointer[(int) num_devices];
-
-		CFSetGetValues(device_set, device_array);
-		for (int i = 0; i < num_devices; i++) {
-			IOHIDDeviceRef os_dev = new IOHIDDeviceRef(device_array[i]);
-			String x = HidDevice.createPathForDevide(os_dev);
-			if (path.equals(x)) {
-				int ret = IOHIDDeviceOpen(os_dev, kIOHIDOptionsTypeNone);
-				if (ret == kIOReturnSuccess) {
-					CFRetain(os_dev);
-					CFRelease(device_set);
-					final HidDevice dev = new HidDevice(os_dev, frontend);
-
-					return dev;
-				} else {
-					System.out.printf("IOHIDDeviceOpen: %d,%d,%d\n", (ret >> (32 - 6)) & 0x3f, (ret >> (32 - 6 - 12)) & 0xFFF, ret & 0x3FFF);
-				}
-			}
-		}
-		CFRelease(device_set);
-		return null;
 	}
 
 }

@@ -34,11 +34,16 @@ import java.util.List;
 
 import com.sun.jna.*;
 
+//Web resources to help implementing the missing functions
+//http://www.signal11.us/oss/udev/
+//http://www.makelinux.net/ldd3/chp-13-sect-5
+//http://lmu.web.psi.ch/docu/manuals/software_manuals/linux_sl/usb_linux_programming_guide.pdf
+
 public class UdevLibrary {
 
 	// OBSOLETE class: hid_device
 
-	static UdevInterface INSTANCE = (UdevInterface) Native.loadLibrary("libudev", UdevInterface.class);
+	static UdevInterface INSTANCE = (UdevInterface) Native.loadLibrary("udev", UdevInterface.class);
 
 	public final static int BUS_USB = 0x03;
 	public final static int BUS_BLUETOOTH = 0x05;
@@ -82,6 +87,10 @@ public class UdevLibrary {
 		}
 	}
 
+	public static class udev_monitor extends PointerType {
+
+	}
+
 	public static class device_handle extends PointerType {
 
 	}
@@ -120,6 +129,28 @@ public class UdevLibrary {
 
 		udev_device udev_device_new_from_syspath(udev udev, String sysfs_path);
 
+		udev_monitor udev_monitor_new_from_netlink(udev udev, String name);
+
+		int udev_monitor_filter_add_match_subsystem_devtype(udev_monitor udev_monitor, String subsystem, String devtype);
+
+		int udev_monitor_enable_receiving(udev_monitor udev_monitor);
+
+		int udev_monitor_get_fd(udev_monitor udev_monitor);
+
+		udev_device udev_monitor_receive_device(udev_monitor udev_monitor);
+
+		String udev_device_get_action(udev_device udev_device);
+
+		String udev_device_get_subsystem(udev_device udev_device);
+
+		String udev_device_get_devtype(udev_device udev_device);
+
+		String udev_device_get_syspath(udev_device udev_device);
+
+		String udev_device_get_sysname(udev_device udev_device);
+
+		String udev_device_get_sysnum(udev_device udev_device);
+
 		String udev_device_get_devnode(udev_device device);
 
 		udev_device udev_device_get_parent_with_subsystem_devtype(udev_device udev_device, String subsystem, String devtype);
@@ -132,17 +163,8 @@ public class UdevLibrary {
 
 		void udev_unref(udev dev);
 
-		int open(String pathname, int flags);
+		//int usb_control_msg(udev_device dev, int pipe, byte request, byte requesttype, short value, short index, Pointer data, short size, int timeout);
 
-		int close(int fd);
-
-		int read(int fd, byte[] data, NativeLong len);
-
-		int write(int fd, byte[] data, NativeLong len);
-
-		int ioctl(int fd, int cmd, int[] p);
-
-		int ioctl(int fd, int cmd, hidraw_report_descriptor p);
 	}
 
 	public static udev udev_new() {
@@ -177,6 +199,50 @@ public class UdevLibrary {
 		return INSTANCE.udev_device_new_from_syspath(udev, sysfs_path);
 	}
 
+	public static udev_monitor udev_monitor_new_from_netlink(udev udev, String name) {
+		return INSTANCE.udev_monitor_new_from_netlink(udev, name);
+	}
+
+	public static int udev_monitor_filter_add_match_subsystem_devtype(udev_monitor udev_monitor, String subsystem, String devtype) {
+		return INSTANCE.udev_monitor_filter_add_match_subsystem_devtype(udev_monitor, subsystem, devtype);
+	}
+
+	public static int udev_monitor_enable_receiving(udev_monitor udev_monitor) {
+		return INSTANCE.udev_monitor_enable_receiving(udev_monitor);
+	}
+
+	public static int udev_monitor_get_fd(udev_monitor udev_monitor) {
+		return INSTANCE.udev_monitor_get_fd(udev_monitor);
+	}
+
+	public static udev_device udev_monitor_receive_device(udev_monitor udev_monitor) {
+		return INSTANCE.udev_monitor_receive_device(udev_monitor);
+	}
+
+	public static String udev_device_get_action(udev_device udev_device) {
+		return INSTANCE.udev_device_get_action(udev_device);
+	}
+
+	public static String udev_device_get_subsystem(udev_device udev_device) {
+		return INSTANCE.udev_device_get_subsystem(udev_device);
+	}
+
+	public static String udev_device_get_devtype(udev_device udev_device) {
+		return INSTANCE.udev_device_get_devtype(udev_device);
+	}
+
+	public static String udev_device_get_syspath(udev_device udev_device) {
+		return INSTANCE.udev_device_get_syspath(udev_device);
+	}
+
+	public static String udev_device_get_sysname(udev_device udev_device) {
+		return INSTANCE.udev_device_get_sysname(udev_device);
+	}
+
+	public static String udev_device_get_sysnum(udev_device udev_device) {
+		return INSTANCE.udev_device_get_sysnum(udev_device);
+	}
+
 	public static String udev_device_get_devnode(udev_device device) {
 		return INSTANCE.udev_device_get_devnode(device);
 	}
@@ -199,30 +265,6 @@ public class UdevLibrary {
 
 	public static void udev_unref(udev dev) {
 		INSTANCE.udev_unref(dev);
-	}
-
-	public static int open(String pathname, int flags) {
-		return INSTANCE.open(pathname, flags);
-	}
-
-	public static void close(int fd) {
-		INSTANCE.close(fd);
-	}
-
-	public static int ioctl(int fd, int cmd, int[] p) {
-		return INSTANCE.ioctl(fd, cmd, p);
-	}
-
-	public static int ioctl(int fd, int cmd, hidraw_report_descriptor p) {
-		return INSTANCE.ioctl(fd, cmd, p);
-	}
-
-	public static int read(int fd, byte[] buffer, int len) {
-		return INSTANCE.read(fd, buffer, new NativeLong(len));
-	}
-
-	public static int write(int fd, byte[] buffer, int len) {
-		return INSTANCE.write(fd, buffer, new NativeLong(len));
 	}
 
 }

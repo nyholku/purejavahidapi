@@ -30,25 +30,23 @@
 package purejavahidapi.linux;
 
 import java.io.IOException;
-import java.util.List;
 
 import com.sun.jna.Native;
 
 import purejavahidapi.*;
+import purejavahidapi.linux.UdevLibrary.*;
 import purejavahidapi.shared.Frontend;
 import purejavahidapi.shared.SyncPoint;
 import static purejavahidapi.linux.UdevLibrary.*;
+import static purejavahidapi.linux.CLibrary.*;
+import static purejavahidapi.linux.HIDRAW.*;
 
-public class HidDevice implements purejavahidapi.HidDevice {
-	private boolean m_Open = true;
+public class HidDevice extends purejavahidapi.HidDevice {
 	private int m_DeviceHandle;
+	private int m_NudgePipeReadHandle;
+	private int m_NudgePipeWriteHandle;
 
-	private InputReportListener m_InputReportListener;
-
-	private DeviceRemovalListener m_DeviceRemovalListener;
-
-	private HidDeviceInfo m_HidDeviceInfo;
-	private Frontend m_Frontend;
+	private LinuxBackend m_Backend;
 
 	private boolean m_UsesNumberedReports;
 	private Thread m_Thread;
@@ -58,16 +56,26 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	private byte[] m_InputReportBytes;
 	private byte[] m_OutputReportBytes;
 
-	/* package */HidDevice(String path, Frontend frontend) throws IOException {
-		m_Frontend = frontend;
-		udev udev = udev_new();
-		udev_device raw_dev = udev_device_new_from_syspath(udev, path);
+	/* package */HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, LinuxBackend backend) throws IOException {
+		m_Backend=backend;
+		m_HidDeviceInfo=deviceInfo;
+		udev_device raw_dev = udev_device_new_from_syspath(backend.m_udev, m_HidDeviceInfo.getPath());
 		String dev_path = udev_device_get_devnode(raw_dev);
-		udev_unref(udev);
+		System.out.println("hid dev path " + dev_path);
 
-		m_HidDeviceInfo = new HidDeviceInfo(path);
-		// OPEN HERE //
+		udev_device usbdev = udev_device_get_parent_with_subsystem_devtype(raw_dev, "usb", "usb_device");
+		String usb_dev_path = udev_device_get_devnode(usbdev);
+		System.out.println("usb dev path " + usb_dev_path);
+
+
 		m_DeviceHandle = open(dev_path, O_RDWR);
+
+		int[] pipes = new int[2];
+		int piperes = pipe(pipes);
+		if (piperes != 0)
+			throw new IOException("pipe() failed" + Native.getLastError());
+		m_NudgePipeReadHandle = pipes[0];
+		m_NudgePipeWriteHandle = pipes[1];
 
 		// If we have a good handle, return it.
 		if (m_DeviceHandle <= 0)
@@ -91,14 +99,13 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		// Determine if this device uses numbered reports. 
 		m_UsesNumberedReports = uses_numbered_reports(rpt_desc.value, rpt_desc.size);
 
-		//---------------
-
-		// Magic here, assume that no HID device ever uses reports longer than 4kB 
 		m_InputReportBytes = new byte[4096 + 1];
 		m_OutputReportBytes = new byte[4096 + 1];
 
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
+
+		backend.addDevice(usb_dev_path, this);
 
 		m_Thread = new Thread(new Runnable() {
 			@Override
@@ -110,27 +117,42 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				}
 			}
 		}, m_HidDeviceInfo.getPath());
+		m_Open = true;
 		m_Thread.start();
 		m_SyncStart.waitAndSync();
 	}
 
-	private void runReadOnBackground() {
+	private void runReadOnBackground() throws IOException {
+		pollfd[] pfds = (pollfd[]) (new pollfd().toArray(2));
+		pfds[0].fd = m_NudgePipeReadHandle;
+		pfds[0].events = POLLIN;
+		pfds[1].fd = m_DeviceHandle;
+		pfds[1].events = POLLIN;
+
 		m_SyncStart.waitAndSync();
+
 		while (!m_StopThread) {
-			// In Linux read() from a HID device we always try to read at least as many bytes as there can be in a report
-			// the kernel will return with the actual number of bytes in the report (plus one if numbered reports are used)
-			// and the data will be preceded with the report number if and only if numbered reports are used, which is
-			// kind of stupid because then we need to know this and to know that it is necessary to (be able to!) read
-			// the HID descriptor AND parse it. I like the Mac OS and Windows ways better, what a mess the world is!
-			int bytes_read = read(m_DeviceHandle, m_InputReportBytes, m_InputReportBytes.length);
-			if (m_InputReportListener != null) {
-				byte reportID = 0;
-				if (m_UsesNumberedReports) {
-					reportID = m_InputReportBytes[0];
-					bytes_read--;
-					System.arraycopy(m_InputReportBytes, 1, m_InputReportBytes, 0, bytes_read);
+			int pollres = poll(pfds, 1, -1);
+			if (pollres < 0)
+				throw new IOException("pipe() failed" + Native.getLastError());
+			if (pollres > 0) {
+				if ((pfds[1].revents & POLLIN) != 0) {
+					// In Linux read() from a HID device we always try to read at least as many bytes as there can be in a report
+					// the kernel will return with the actual number of bytes in the report (plus one if numbered reports are used)
+					// and the data will be preceded with the report number if and only if numbered reports are used, which is
+					// kind of stupid because then we need to know this and to know that it is necessary to (be able to!) read
+					// the HID descriptor AND parse it. I like the Mac OS and Windows ways better, what a mess the world is!
+					int bytes_read = read(m_DeviceHandle, m_InputReportBytes, m_InputReportBytes.length);
+					if (m_InputReportListener != null) {
+						byte reportID = 0;
+						if (m_UsesNumberedReports) {
+							reportID = m_InputReportBytes[0];
+							bytes_read--;
+							System.arraycopy(m_InputReportBytes, 1, m_InputReportBytes, 0, bytes_read);
+						}
+						m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, bytes_read);
+					}
 				}
-				m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, bytes_read);
 			}
 
 		}
@@ -138,15 +160,18 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	@Override
-	synchronized public void close() {
+	public void close() {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		m_StopThread=true;
-		UdevLibrary.close(m_DeviceHandle);
+		m_StopThread = true;
+		write(m_NudgePipeWriteHandle, new byte[1], 1);
 		m_Thread.interrupt();
 		m_SyncShutdown.waitAndSync();
-		m_Frontend.closeDevice(this);
-		m_Open=false;
+		CLibrary.close(m_DeviceHandle);
+		CLibrary.close(m_NudgePipeWriteHandle);
+		CLibrary.close(m_NudgePipeReadHandle);
+		m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
+		m_Open = false;
 	}
 
 	@Override
@@ -177,7 +202,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	synchronized public int setFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		return -1;
+		return ioctl(m_DeviceHandle, HIDIOCSFEATURE(length), data);
 	}
 
 	@Override
@@ -198,24 +223,20 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	synchronized public int getFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		return -1;
-	}
-
-	@Override
-	synchronized public HidDeviceInfo getHidDeviceInfo() {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		return m_HidDeviceInfo;
+		return ioctl(m_DeviceHandle, HIDIOCGFEATURE(length), data);
 	}
 
 	private static boolean uses_numbered_reports(byte[] report_descriptor, int size)
 
 	{
-
-		for (int i = 0; i < size; i++) {
-			System.out.printf("0x%02X, ", report_descriptor[i]);
-			if ((i & 15) == 15)
-				System.out.println();
+		final boolean debug = false;
+		if (debug) {
+			for (int i = 0; i < size; i++) {
+				System.out.printf("0x%02X, ", report_descriptor[i]);
+				if ((i & 15) == 15)
+					System.out.println();
+			}
+			System.out.println();
 		}
 		int i = 0;
 
@@ -231,24 +252,27 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				return true;
 			}
 
-			System.out.printf("key: %02x\n", 0xff & key);
+			if (debug)
+				System.out.printf("key: %02x\n", 0xff & key);
 
 			if ((key & 0xf0) == 0xf0) {
-				/* This is a Long Item. The next byte contains the
-				   length of the data section (value) for this key.
-				   See the HID specification, version 1.11, section
-				   6.2.2.3, titled "Long Items." */
+				/*
+				 * This is a Long Item. The next byte contains the length of the
+				 * data section (value) for this key. See the HID specification,
+				 * version 1.11, section 6.2.2.3, titled "Long Items."
+				 */
 				if (i + 1 < size)
 					data_len = report_descriptor[i + 1];
 				else
 					data_len = 0; // malformed report 
 				key_size = 3;
 			} else {
-				/* This is a Short Item. The bottom two bits of the
-				   key contain the size code for the data section
-				   (value) for this key.  Refer to the HID
-				   specification, version 1.11, section 6.2.2.2,
-				   titled "Short Items." */
+				/*
+				 * This is a Short Item. The bottom two bits of the key contain
+				 * the size code for the data section (value) for this key.
+				 * Refer to the HID specification, version 1.11, section
+				 * 6.2.2.2, titled "Short Items."
+				 */
 				size_code = key & 0x3;
 				switch (size_code) {
 					case 0:
@@ -272,9 +296,13 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			i += data_len + key_size;
 		}
 
-		/* Didn't find a Report ID key. Device doesn't use numbered reports. 
-		*/
+		/*
+		 * Didn't find a Report ID key. Device doesn't use numbered reports.
+		 */
 		return false;
 	}
 
+	public DeviceRemovalListener getDeviceRemovalListener() {
+		return m_DeviceRemovalListener;
+	}
 }

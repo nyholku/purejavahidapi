@@ -31,26 +31,97 @@ package purejavahidapi.linux;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
-import purejavahidapi.linux.UdevLibrary.hidraw_report_descriptor;
+import purejavahidapi.DeviceRemovalListener;
+import purejavahidapi.linux.CLibrary.pollfd;
+import purejavahidapi.linux.UdevLibrary.udev;
 import purejavahidapi.shared.Backend;
-import purejavahidapi.shared.Frontend;
-
-import com.sun.jna.Pointer;
-
+import static purejavahidapi.linux.CLibrary.POLLIN;
+import static purejavahidapi.linux.CLibrary.poll;
 import static purejavahidapi.linux.UdevLibrary.*;
 
-public class LinuxBackend implements Backend {
+public class LinuxBackend extends Backend {
+	udev m_udev;
+
 	@Override
 	public void init() {
+		try {
+			m_udev = udev_new();
+
+			if (m_udev == null)
+				throw new Exception("udev_new returned null");
+
+			final udev_monitor udev_monitor = udev_monitor_new_from_netlink(m_udev, "udev");
+			if (udev_monitor == null)
+				throw new Exception("udev_monitor returned null");
+
+			if (udev_monitor_filter_add_match_subsystem_devtype(udev_monitor, "usb", "usb_device") < 0)
+				throw new Exception("udev_monitor_filter_add_match_subsystem_devtype failed");
+
+			if (udev_monitor_enable_receiving(udev_monitor) < 0)
+				throw new Exception("udev_monitor_enable_receiving failed");
+
+			final int udev_monitor_fd = udev_monitor_get_fd(udev_monitor);
+
+			new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+					try {
+						while (true) {
+
+							pollfd[] pfds = (pollfd[]) (new pollfd().toArray(1));
+							pfds[0].fd = udev_monitor_fd;
+							pfds[0].events = POLLIN;
+
+							int pollres = poll(pfds, 1, -1);
+
+							if (pollres > 0) {
+								udev_device dev = udev_monitor_receive_device(udev_monitor);
+								String action = udev_device_get_action(dev);
+								// System.out.println("devnode " +
+								// udev_device_get_devnode(dev));
+								// System.out.println("subsytem " +
+								// udev_device_get_subsystem(dev));
+								// System.out.println("devtype " +
+								// udev_device_get_devtype(dev));
+								// System.out.println("action " +
+								// udev_device_get_action(dev));
+								if ("remove".equals(action))
+									deviceRemoved(udev_device_get_devnode(dev));
+							}
+							Thread.sleep(1000);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+
+				}
+			}).start();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void cleanup() {
 
+	}
+
+
+	/* package */void deviceRemoved(String deviceId) {
+		HidDevice device = (HidDevice)getDevice(deviceId);
+		if (device != null) {
+			DeviceRemovalListener listener = device.getDeviceRemovalListener();
+			device.close();
+			if (listener != null)
+				listener.onDeviceRemoval(device);
+		}
 	}
 
 	@Override
@@ -63,22 +134,17 @@ public class LinuxBackend implements Backend {
 		udev_list_entry dev_list_entry;
 		udev udev;
 
-		udev = udev_new();
+		udev = m_udev; // udev_new();
 
 		enumerate = udev_enumerate_new(udev);
 		udev_enumerate_add_match_subsystem(enumerate, "hidraw");
 		udev_enumerate_scan_devices(enumerate);
 		devices = udev_enumerate_get_list_entry(enumerate);
 
-		// FOR EACH
 		loop: for (dev_list_entry = devices; dev_list_entry != null; dev_list_entry = udev_list_entry_get_next(dev_list_entry)) {
-			String str;
-			udev_device usb_dev; // The device's USB udev node.
-			udev_device intf_dev; // The device's interface (in the USB sense).
 
 			String sysfs_path = udev_list_entry_get_name(dev_list_entry);
 			udev_device raw_dev = udev_device_new_from_syspath(udev, sysfs_path);
-			String dev_path = udev_device_get_devnode(raw_dev);
 			udev_device hid_dev = udev_device_get_parent_with_subsystem_devtype(raw_dev, "hid", null);
 
 			if (hid_dev == null)
@@ -104,19 +170,20 @@ public class LinuxBackend implements Backend {
 			}
 
 			udev_device_unref(raw_dev);
-			//* hid_dev, usb_dev and intf_dev can't be) unref()d. I'm not sure why.
+			// * hid_dev, usb_dev and intf_dev can't be) unref()d. I'm not sure
+			// why.
 
-		} 
+		}
 		/* Free the enumerator and udev objects. */
 		udev_enumerate_unref(enumerate);
-		udev_unref(udev);
+//		udev_unref(udev);
 
 		return list;
 	}
 
 	@Override
-	public purejavahidapi.HidDevice openDevice(String path,Frontend frontend) throws IOException {
-		return new HidDevice(path,frontend);
+	public purejavahidapi.HidDevice openDevice(purejavahidapi.HidDeviceInfo deviceInfo) throws IOException {
+		return new HidDevice(deviceInfo, this);
 
 	}
 

@@ -42,60 +42,13 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
-public class HidDeviceInfo implements purejavahidapi.HidDeviceInfo {
-	private String m_Path;
-	private short m_VendorId;
-	private short m_ProductId;
-	private short m_ReleaseNumber;
-	private short m_UsagePage;
-	private String m_SerialNumberString;
-	private String m_ManufactureString;
-	private String m_ProductString;
+public class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
-	@Override
-	public String getPath() {
-		return m_Path;
-	}
 
-	@Override
-	public short getVendorId() {
-		return m_VendorId;
-	}
-
-	@Override
-	public short getProductId() {
-		return m_ProductId;
-	}
-
-	@Override
-	public short getReleaseNumber() {
-		return m_ReleaseNumber;
-	}
-
-	@Override
-	public String getManufacturerString() {
-		return m_ManufactureString;
-	}
-
-	@Override
-	public String getProductString() {
-		return m_ProductString;
-	}
-
-	@Override
-	public String getSerialNumberString() {
-		return m_SerialNumberString;
-	}
-
-	@Override
-	public short getUsagePage() {
-		return m_UsagePage;
-	}
-	
-
-	public HidDeviceInfo(String path,HANDLE handle, HIDD_ATTRIBUTES attrib) {
+	public HidDeviceInfo(String path, String deviceId, HANDLE handle, HIDD_ATTRIBUTES attrib) {
 		try {
 			m_Path = path;
+			m_DeviceId = deviceId;
 			m_VendorId = attrib.VendorID;
 			m_ProductId = attrib.ProductID;
 
@@ -113,12 +66,12 @@ public class HidDeviceInfo implements purejavahidapi.HidDeviceInfo {
 
 			byte[] wstr = new byte[256];
 			int sizeofWstr = wstr.length;
-			ByteBuffer b=ByteBuffer.wrap(wstr);
+			ByteBuffer b = ByteBuffer.wrap(wstr);
 
 			if (HidD_GetSerialNumberString(handle, wstr, sizeofWstr))
 				m_SerialNumberString = Native.toString(wstr, "utf-16le");
 			if (HidD_GetManufacturerString(handle, wstr, sizeofWstr))
-				m_ManufactureString =  Native.toString(wstr, "utf-16le");
+				m_ManufactureString = Native.toString(wstr, "utf-16le");
 
 		} catch (Exception e) {
 			e.printStackTrace();

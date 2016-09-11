@@ -40,14 +40,15 @@ import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
 import com.sun.jna.*;
 
 import purejavahidapi.*;
+import purejavahidapi.macosx.CoreFoundationLibrary.CFSetRef;
+import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
+import purejavahidapi.shared.Backend;
 import purejavahidapi.shared.Frontend;
 import purejavahidapi.shared.SyncPoint;
 
-public class HidDevice implements purejavahidapi.HidDevice {
+public class HidDevice extends purejavahidapi.HidDevice {
+	private MacOsXBackend m_Backend;
 	private static int m_InternalIdGenerator = 0;
-	private boolean m_Open = true;
-	private Frontend m_Frontend;
-	private HidDeviceInfo m_HidDeviceInfo;
 	int m_InternalId = m_InternalIdGenerator++; // used when passing 'HidDevice' to Mac OS X callbacks
 	private IOHIDDeviceRef m_IOHIDDeviceRef;
 	private boolean m_Disconnected;
@@ -57,8 +58,6 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	private Pointer m_InputReportBuffer;
 	private byte[] m_InputReportData;
 	private int m_MaxInputReportLength;
-	private InputReportListener m_InputReportListener;
-	private DeviceRemovalListener m_DeviceRemovalListener;
 	private Thread m_Thread;
 	private SyncPoint m_SyncStart;
 	private SyncPoint m_SyncShutdown;
@@ -75,9 +74,11 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		return new Pointer(m_InternalId);
 	}
 
-	HidDevice(IOHIDDeviceRef dev, Frontend frontend) {
-		m_Frontend = frontend;
-		m_IOHIDDeviceRef = dev;
+	HidDevice(HidDeviceInfo hidDeviceInfo, MacOsXBackend backend) {
+		m_Backend = backend;
+		m_HidDeviceInfo = hidDeviceInfo;
+
+		m_IOHIDDeviceRef = m_Backend.getIOHIDDeviceRef(hidDeviceInfo.getPath());
 
 		m_PerformSignalCallback = new PerformSignalCallback();
 		m_DevFromCallback.put(m_PerformSignalCallback, this);
@@ -90,19 +91,17 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
-		m_MaxInputReportLength = getIntProperty(dev, CFSTR(kIOHIDMaxInputReportSizeKey));
+		m_MaxInputReportLength = getIntProperty(m_IOHIDDeviceRef, CFSTR(kIOHIDMaxInputReportSizeKey));
 		if (m_MaxInputReportLength > 0) {
 			m_InputReportBuffer = new Memory(m_MaxInputReportLength);
 			m_InputReportData = new byte[m_MaxInputReportLength];
 		}
 
-		m_HidDeviceInfo = new HidDeviceInfo(dev);
-
-		String str = String.format("HIDAPI_0x%08x", Pointer.nativeValue(dev.getPointer()));
+		String str = String.format("HIDAPI_0x%08x", Pointer.nativeValue(m_IOHIDDeviceRef.getPointer()));
 		m_CFRunLoopMode = CFStringCreateWithCString(null, str, kCFStringEncodingASCII);
 
 		if (m_MaxInputReportLength > 0)
-			IOHIDDeviceRegisterInputReportCallback(dev, m_InputReportBuffer, m_MaxInputReportLength, m_HidReportCallBack, asPointerForPassingToCallback()); // shoudl pass dev
+			IOHIDDeviceRegisterInputReportCallback(m_IOHIDDeviceRef, m_InputReportBuffer, m_MaxInputReportLength, m_HidReportCallBack, asPointerForPassingToCallback()); // shoudl pass dev
 
 		IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, m_HidDeviceRemovalCallback, asPointerForPassingToCallback());
 
@@ -148,6 +147,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 			}
 		}, m_HidDeviceInfo.getPath());
+		m_Open = true;
 		m_Thread.start();
 		m_SyncStart.waitAndSync();
 	}
@@ -353,14 +353,11 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		m_DevFromCallback.remove(m_PerformSignalCallback);
 		m_DevFromCallback.remove(m_HidReportCallBack);
 		m_DevFromCallback.remove(m_HidDeviceRemovalCallback);
-
-		m_Frontend.closeDevice(this);
-
 		m_Open = false;
 	}
 
 	@Override
-	synchronized public HidDeviceInfo getHidDeviceInfo() {
+	synchronized public purejavahidapi.HidDeviceInfo getHidDeviceInfo() {
 		return m_HidDeviceInfo;
 	}
 

@@ -32,27 +32,20 @@ package purejavahidapi.windows;
 import static purejavahidapi.windows.HidLibrary.*;
 import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.SetupApiLibrary.*;
-
-import java.nio.ByteBuffer;
-import java.util.List;
+import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
 
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
-import purejavahidapi.DeviceRemovalListener;
-import purejavahidapi.InputReportListener;
-import purejavahidapi.linux.UdevLibrary;
-import purejavahidapi.shared.Frontend;
 import purejavahidapi.shared.SyncPoint;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.WinDef.HANDLE;
 import purejavahidapi.windows.WinDef.OVERLAPPED;
 
-public class HidDevice implements purejavahidapi.HidDevice {
-	private boolean m_Open = true;
-	private Frontend m_Frontend;
+public class HidDevice extends purejavahidapi.HidDevice {
+	private WindowsBackend m_Backend;
 	private HANDLE m_Handle;
 	private int m_OutputReportLength;
 	private Memory m_OutputReportMemory;
@@ -68,16 +61,19 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	private SyncPoint m_SyncShutdown;
 	private boolean m_StopThread;
 	private HidDeviceInfo m_HidDeviceInfo;
-	private InputReportListener m_InputReportListener;
-	private DeviceRemovalListener m_DeviceRemovalListener;
 
-	/* package */HidDevice(String path, HANDLE handle, Frontend frontend) {
-		m_Frontend = frontend;
+	/* package */HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
+		HANDLE handle = backend.openDeviceHandle(deviceInfo.getPath(), false);
+
+		if (handle == INVALID_HANDLE_VALUE)
+			return;
+
+		m_Backend = backend;
 		m_Handle = handle;
 		HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
 		attrib.Size = new NativeLong(attrib.size());
 		HidD_GetAttributes(handle, attrib);
-		m_HidDeviceInfo = new HidDeviceInfo(path, handle, attrib);
+		m_HidDeviceInfo = (HidDeviceInfo) deviceInfo;
 		boolean res;
 		HIDP_PREPARSED_DATA[] ppd = new HIDP_PREPARSED_DATA[1];
 		res = HidD_GetPreparsedData(handle, ppd);
@@ -110,6 +106,8 @@ public class HidDevice implements purejavahidapi.HidDevice {
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
 
+		m_Backend.addDevice(deviceInfo.getDeviceId(), this);
+
 		m_Thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -120,6 +118,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				}
 			}
 		}, m_HidDeviceInfo.getPath());
+		m_Open = true;
 		if (m_InputReportLength > 0) {
 			m_Thread.start();
 			m_SyncStart.waitAndSync();
@@ -138,7 +137,7 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			m_SyncShutdown.waitAndSync();
 		}
 		CloseHandle(m_Handle);
-		m_Frontend.closeDevice(this);
+		m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
 		m_Open = false;
 	}
 
@@ -182,20 +181,6 @@ public class HidDevice implements purejavahidapi.HidDevice {
 	}
 
 	@Override
-	synchronized public void setInputReportListener(InputReportListener listener) {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		m_InputReportListener = listener;
-	}
-
-	@Override
-	synchronized public void setDeviceRemovalListener(DeviceRemovalListener listener) {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		m_DeviceRemovalListener = listener;
-	}
-
-	@Override
 	synchronized public int getFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
@@ -205,12 +190,13 @@ public class HidDevice implements purejavahidapi.HidDevice {
 				System.out.println(GetLastError());
 				return -1;
 			}
-		} else { 
+		} else {
 			int[] bytes = { 0 };
 
 			OVERLAPPED ol = new OVERLAPPED();
 			Pointer buffer = new Memory(data.length);
 			if (!DeviceIoControl(m_Handle, IOCTL_HID_GET_FEATURE, buffer, length, buffer, length, bytes, ol)) {
+				//System.out.println(GetLastError());
 				if (GetLastError() != ERROR_IO_PENDING)
 					return -1;
 			}
@@ -218,20 +204,14 @@ public class HidDevice implements purejavahidapi.HidDevice {
 			if (!GetOverlappedResult(m_Handle, ol, bytes, true/* wait */))
 				return -1;
 			int n = bytes[0];
-			byte[] t=buffer.getByteArray(0, n);
-			System.arraycopy(t, 0, data,0,n);
+			byte[] t = buffer.getByteArray(0, n);
+			System.arraycopy(t, 0, data, 0, n);
 			return n;
 		}
 		return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go figure
 
 	}
 
-	@Override
-	synchronized public HidDeviceInfo getHidDeviceInfo() {
-		if (!m_Open)
-			throw new IllegalStateException("device not open");
-		return m_HidDeviceInfo;
-	}
 
 	private void runReadOnBackground() {
 		m_SyncStart.waitAndSync();
@@ -272,9 +252,5 @@ public class HidDevice implements purejavahidapi.HidDevice {
 
 		}
 		m_SyncShutdown.waitAndSync();
-	}
-
-	/* package */DeviceRemovalListener getDeviceRemovalListener() {
-		return m_DeviceRemovalListener;
 	}
 }

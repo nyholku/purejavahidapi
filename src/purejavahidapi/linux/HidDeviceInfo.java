@@ -46,55 +46,7 @@ import java.util.Properties;
 import purejavahidapi.linux.UdevLibrary.udev;
 import purejavahidapi.linux.UdevLibrary.udev_device;
 
-public class HidDeviceInfo implements purejavahidapi.HidDeviceInfo {
-	private String m_Path;
-	private short m_VendorId;
-	private short m_ProductId;
-	private short m_ReleaseNumber;
-	private short m_UsagePage;
-	private String m_SerialNumberString;
-	private String m_ManufacturerString;
-	private String m_ProductString;
-
-	@Override
-	public String getPath() {
-		return m_Path;
-	}
-
-	@Override
-	public short getVendorId() {
-		return m_VendorId;
-	}
-
-	@Override
-	public short getProductId() {
-		return m_ProductId;
-	}
-
-	@Override
-	public short getReleaseNumber() {
-		return m_ReleaseNumber;
-	}
-
-	@Override
-	public String getManufacturerString() {
-		return m_ManufacturerString;
-	}
-
-	@Override
-	public String getProductString() {
-		return m_ProductString;
-	}
-
-	@Override
-	public String getSerialNumberString() {
-		return m_SerialNumberString;
-	}
-
-	@Override
-	public short getUsagePage() {
-		return m_UsagePage;
-	}
+public class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
 	public HidDeviceInfo(String path, short vendorId, short productId, String serialNumber, String manufacturer
 
@@ -103,7 +55,6 @@ public class HidDeviceInfo implements purejavahidapi.HidDeviceInfo {
 		m_VendorId = vendorId;
 		m_ProductId = productId;
 		m_SerialNumberString = serialNumber;
-		m_ManufacturerString = manufacturer;
 
 	}
 

@@ -89,16 +89,11 @@ public class PureJavaHidApi {
 	 * @throws IOException if the device cannot be opened
 	 * @see HidDeviceInfo#getPath()
 	 */
-	public static HidDevice openDevice(String path) throws IOException {
+	public static HidDevice openDevice(HidDeviceInfo path) throws IOException {
 		synchronized (m_Mutex) {
 			if (m_Backend==null)
 				throw new IllegalStateException("Unsupported platform");
-			HidDevice device = m_Backend.openDevice(path, new Frontend() {
-				@Override
-				public void closeDevice(HidDevice device) {
-					m_OpenDevices.remove(device);
-				}
-			});
+			HidDevice device = m_Backend.openDevice(path);
 			if (device!=null)
 				m_OpenDevices.add(device);
 			return device;

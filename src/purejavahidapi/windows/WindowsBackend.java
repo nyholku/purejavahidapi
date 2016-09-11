@@ -29,6 +29,8 @@
  */
 package purejavahidapi.windows;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -50,9 +52,7 @@ import static purejavahidapi.windows.SetupApiLibrary.*;
 import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.HidLibrary.*;
 
-public class WindowsBackend implements Backend {
-	private final static String DEVICE_ID_SEPARATOR = "\u2022"; // Unicode buller
-	private LinkedList<HidDevice> m_OpenDevices = new LinkedList<HidDevice>();
+public class WindowsBackend extends Backend {
 
 	@Override
 	public void init() {
@@ -64,34 +64,14 @@ public class WindowsBackend implements Backend {
 
 	}
 
-	/* package */void closeDevice(HidDevice device) {
-		m_OpenDevices.remove(device);
-	}
-
 	/* package */void deviceRemoved(String deviceId) {
-		for (HidDevice device : m_OpenDevices) {
-			HidDeviceInfo info = device.getHidDeviceInfo();
-			String path = info.getPath();
-			String id = path.substring(path.indexOf(DEVICE_ID_SEPARATOR) + 1);
-			if (deviceId.equals(id)) {
-				DeviceRemovalListener listener = device.getDeviceRemovalListener();
-				device.close();
-				if (listener != null)
-					listener.onDeviceRemoval(device);
-			}
+		purejavahidapi.HidDevice device = getDevice(deviceId);
+		if (device != null) {
+			DeviceRemovalListener listener = device.getDeviceRemovalListener();
+			device.close();
+			if (listener != null)
+				listener.onDeviceRemoval(device);
 		}
-	}
-
-	/* package */static HANDLE openDeviceHandle(String path, boolean enumerate) {
-		path = path.substring(0, path.indexOf(DEVICE_ID_SEPARATOR));
-
-		HANDLE handle;
-		int desired_access = (enumerate) ? 0 : (GENERIC_WRITE | GENERIC_READ);
-		int share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
-
-		handle = CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, null);
-
-		return handle;
 	}
 
 	static public void reportLastError() {
@@ -101,6 +81,10 @@ public class WindowsBackend implements Backend {
 			String message = String.format("GetLastError() == %d at %s:%d\n", rc, ste.getFileName(), ste.getLineNumber());
 			throw new RuntimeException(message);
 		}
+	}
+
+	interface EnumerateCallback {
+
 	}
 
 	@Override
@@ -194,7 +178,9 @@ public class WindowsBackend implements Backend {
 					}
 
 					String path = new String(device_interface_detail_data.DevicePath);
-					path += DEVICE_ID_SEPARATOR + deviceId;
+					// path += DEVICE_ID_SEPARATOR + deviceId;
+					// FIXME, need to figure out how to smugle device ID to the actual device ... or how
+					// recreate as above when opening the device
 					devHandle = openDeviceHandle(path, true);
 					if (devHandle == INVALID_HANDLE_VALUE)
 						break;
@@ -202,7 +188,7 @@ public class WindowsBackend implements Backend {
 					HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
 					attrib.Size = new NativeLong(attrib.size());
 					HidD_GetAttributes(devHandle, attrib);
-					list.add(new HidDeviceInfo(path, devHandle, attrib));
+					list.add(new HidDeviceInfo(path, deviceId, devHandle, attrib));
 
 					CloseHandle(devHandle);
 				}
@@ -218,15 +204,19 @@ public class WindowsBackend implements Backend {
 	}
 
 	@Override
-	public purejavahidapi.HidDevice openDevice(String path, Frontend frontend) {
-		HANDLE handle = openDeviceHandle(path, false);
+	public purejavahidapi.HidDevice openDevice(purejavahidapi.HidDeviceInfo deviceInfo) throws IOException {
+		return new HidDevice(deviceInfo, this);
+	}
 
-		if (handle == INVALID_HANDLE_VALUE)
-			return null;
+	/* package */static HANDLE openDeviceHandle(String path, boolean enumerate) {
 
-		HidDevice device = new HidDevice(path, handle, frontend);
-		m_OpenDevices.add(device);
-		return device;
+		HANDLE handle;
+		int desired_access = (enumerate) ? 0 : (GENERIC_WRITE | GENERIC_READ);
+		int share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
+
+		handle = CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, null);
+
+		return handle;
 	}
 
 }
