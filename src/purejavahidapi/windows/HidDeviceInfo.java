@@ -42,8 +42,7 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
-public class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
-
+/* package*/class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
 	public HidDeviceInfo(String path, String deviceId, HANDLE handle, HIDD_ATTRIBUTES attrib) {
 		try {

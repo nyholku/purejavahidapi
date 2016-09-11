@@ -41,7 +41,6 @@ import purejavahidapi.macosx.CoreFoundationLibrary.CFSetRef;
 import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
 import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDManagerRef;
 import purejavahidapi.shared.Backend;
-import purejavahidapi.shared.Frontend;
 import static purejavahidapi.macosx.HidDevice.*;
 
 public class MacOsXBackend extends Backend {

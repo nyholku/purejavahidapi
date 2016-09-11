@@ -31,7 +31,6 @@ package purejavahidapi.macosx;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.*;
-import java.util.Arrays;
 import java.util.Hashtable;
 
 import static purejavahidapi.macosx.CoreFoundationLibrary.*;
@@ -40,10 +39,7 @@ import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
 import com.sun.jna.*;
 
 import purejavahidapi.*;
-import purejavahidapi.macosx.CoreFoundationLibrary.CFSetRef;
 import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
-import purejavahidapi.shared.Backend;
-import purejavahidapi.shared.Frontend;
 import purejavahidapi.shared.SyncPoint;
 
 public class HidDevice extends purejavahidapi.HidDevice {
@@ -147,6 +143,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 			}
 		}, m_HidDeviceInfo.getPath());
+		m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
 		m_Open = true;
 		m_Thread.start();
 		m_SyncStart.waitAndSync();
@@ -353,6 +350,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_DevFromCallback.remove(m_PerformSignalCallback);
 		m_DevFromCallback.remove(m_HidReportCallBack);
 		m_DevFromCallback.remove(m_HidDeviceRemovalCallback);
+		m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
 		m_Open = false;
 	}
 

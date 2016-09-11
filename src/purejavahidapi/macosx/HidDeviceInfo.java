@@ -34,10 +34,11 @@ import static purejavahidapi.macosx.IOHIDManagerLibrary.*;
 import purejavahidapi.macosx.IOHIDManagerLibrary.IOHIDDeviceRef;
 import static purejavahidapi.macosx.HidDevice.*;
 
-public class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
-
+/* package */class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
+	private static int m_NextDeviceId = 1;
 
 	public HidDeviceInfo(IOHIDDeviceRef dev) {
+		m_DeviceId = Integer.toString(m_NextDeviceId++);
 		m_ProductId = (short) getIntProperty(dev, CFSTR(kIOHIDProductIDKey));
 		m_VendorId = (short) getIntProperty(dev, CFSTR(kIOHIDVendorIDKey));
 		m_Path = createPathForDevide(dev);

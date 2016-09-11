@@ -31,12 +31,10 @@ package purejavahidapi.linux;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
-import purejavahidapi.DeviceRemovalListener;
 import purejavahidapi.linux.CLibrary.pollfd;
 import purejavahidapi.linux.UdevLibrary.udev;
 import purejavahidapi.shared.Backend;
@@ -45,17 +43,16 @@ import static purejavahidapi.linux.CLibrary.poll;
 import static purejavahidapi.linux.UdevLibrary.*;
 
 public class LinuxBackend extends Backend {
-	udev m_udev;
 
 	@Override
 	public void init() {
 		try {
-			m_udev = udev_new();
+			udev udev = udev_new();
 
-			if (m_udev == null)
+			if (udev == null)
 				throw new Exception("udev_new returned null");
 
-			final udev_monitor udev_monitor = udev_monitor_new_from_netlink(m_udev, "udev");
+			final udev_monitor udev_monitor = udev_monitor_new_from_netlink(udev, "udev");
 			if (udev_monitor == null)
 				throw new Exception("udev_monitor returned null");
 
@@ -66,6 +63,7 @@ public class LinuxBackend extends Backend {
 				throw new Exception("udev_monitor_enable_receiving failed");
 
 			final int udev_monitor_fd = udev_monitor_get_fd(udev_monitor);
+			//udev_unref(udev);
 
 			new Thread(new Runnable() {
 
@@ -83,18 +81,9 @@ public class LinuxBackend extends Backend {
 							if (pollres > 0) {
 								udev_device dev = udev_monitor_receive_device(udev_monitor);
 								String action = udev_device_get_action(dev);
-								// System.out.println("devnode " +
-								// udev_device_get_devnode(dev));
-								// System.out.println("subsytem " +
-								// udev_device_get_subsystem(dev));
-								// System.out.println("devtype " +
-								// udev_device_get_devtype(dev));
-								// System.out.println("action " +
-								// udev_device_get_action(dev));
 								if ("remove".equals(action))
 									deviceRemoved(udev_device_get_devnode(dev));
 							}
-							Thread.sleep(1000);
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -113,17 +102,6 @@ public class LinuxBackend extends Backend {
 
 	}
 
-
-	/* package */void deviceRemoved(String deviceId) {
-		HidDevice device = (HidDevice)getDevice(deviceId);
-		if (device != null) {
-			DeviceRemovalListener listener = device.getDeviceRemovalListener();
-			device.close();
-			if (listener != null)
-				listener.onDeviceRemoval(device);
-		}
-	}
-
 	@Override
 	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
 
@@ -134,7 +112,7 @@ public class LinuxBackend extends Backend {
 		udev_list_entry dev_list_entry;
 		udev udev;
 
-		udev = m_udev; // udev_new();
+		udev = udev_new();
 
 		enumerate = udev_enumerate_new(udev);
 		udev_enumerate_add_match_subsystem(enumerate, "hidraw");
@@ -176,7 +154,7 @@ public class LinuxBackend extends Backend {
 		}
 		/* Free the enumerator and udev objects. */
 		udev_enumerate_unref(enumerate);
-//		udev_unref(udev);
+		udev_unref(udev);
 
 		return list;
 	}

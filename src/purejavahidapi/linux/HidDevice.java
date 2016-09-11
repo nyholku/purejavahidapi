@@ -35,7 +35,6 @@ import com.sun.jna.Native;
 
 import purejavahidapi.*;
 import purejavahidapi.linux.UdevLibrary.*;
-import purejavahidapi.shared.Frontend;
 import purejavahidapi.shared.SyncPoint;
 import static purejavahidapi.linux.UdevLibrary.*;
 import static purejavahidapi.linux.CLibrary.*;
@@ -57,16 +56,12 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private byte[] m_OutputReportBytes;
 
 	/* package */HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, LinuxBackend backend) throws IOException {
-		m_Backend=backend;
-		m_HidDeviceInfo=deviceInfo;
-		udev_device raw_dev = udev_device_new_from_syspath(backend.m_udev, m_HidDeviceInfo.getPath());
+		m_Backend = backend;
+		m_HidDeviceInfo = deviceInfo;
+		udev udev=udev_new();
+		udev_device raw_dev = udev_device_new_from_syspath(udev, m_HidDeviceInfo.getPath());
 		String dev_path = udev_device_get_devnode(raw_dev);
-		System.out.println("hid dev path " + dev_path);
-
-		udev_device usbdev = udev_device_get_parent_with_subsystem_devtype(raw_dev, "usb", "usb_device");
-		String usb_dev_path = udev_device_get_devnode(usbdev);
-		System.out.println("usb dev path " + usb_dev_path);
-
+		udev_unref(udev);
 
 		m_DeviceHandle = open(dev_path, O_RDWR);
 
@@ -105,8 +100,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
 
-		backend.addDevice(usb_dev_path, this);
-
 		m_Thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -117,6 +110,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				}
 			}
 		}, m_HidDeviceInfo.getPath());
+		m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
 		m_Open = true;
 		m_Thread.start();
 		m_SyncStart.waitAndSync();
@@ -171,6 +165,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		CLibrary.close(m_NudgePipeWriteHandle);
 		CLibrary.close(m_NudgePipeReadHandle);
 		m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
+
 		m_Open = false;
 	}
 

@@ -52,14 +52,15 @@ public class HidDeviceInfo {
 	protected String m_ManufactureString;
 	protected String m_ProductString;
 
-	/**
+/**
 	 * This method returns a string that represents a platform dependent path
 	 * that describes the 'physical' path through hubs and ports to the device.
 	 * <p>
 	 * The main use of the path is to pass it to the
-	 * {@link PureJavaHidApi#openDevice(String) to obtain an instance {
+	 * {@link PureJavaHidApi#openDevice(String) to obtain an instance
+	 * 
 	 * @link HidDevice} which can subsequently be used to communicate with the
-	 * device.
+	 *       device.
 	 * 
 	 * @return a string representing a 'path' to the device
 	 */
@@ -155,8 +156,9 @@ public class HidDeviceInfo {
 	public String getSerialNumberString() {
 		return m_SerialNumberString;
 	}
-	
+
 	public String getDeviceId() {
 		return m_DeviceId;
 	}
+
 }

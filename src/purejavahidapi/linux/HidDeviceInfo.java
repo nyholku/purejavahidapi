@@ -46,37 +46,38 @@ import java.util.Properties;
 import purejavahidapi.linux.UdevLibrary.udev;
 import purejavahidapi.linux.UdevLibrary.udev_device;
 
-public class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
-
-	public HidDeviceInfo(String path, short vendorId, short productId, String serialNumber, String manufacturer
-
-	) {
-		m_Path = path;
-		m_VendorId = vendorId;
-		m_ProductId = productId;
-		m_SerialNumberString = serialNumber;
-
-	}
+/* package */class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
 	public HidDeviceInfo(String sysfs_path) throws IOException {
-		m_Path=sysfs_path;
+		m_Path = sysfs_path;
 		udev_device raw_dev = null;
 		udev udev = null;
+		udev_device hid_dev=null;
+		udev_device usb_dev=null;
 		try {
 			udev = udev_new();
 
 			raw_dev = udev_device_new_from_syspath(udev, sysfs_path);
 			String dev_path = udev_device_get_devnode(raw_dev);
-			udev_device hid_dev = udev_device_get_parent_with_subsystem_devtype(raw_dev, "hid", null);
+			hid_dev = udev_device_get_parent_with_subsystem_devtype(raw_dev, "hid", null);
 
 			if (hid_dev == null)
 				throw new IOException("hid_dev == null");
+			
+			if (dev_path == null)
+				throw new IOException("dev_path == null");
+			
+			usb_dev = udev_device_get_parent_with_subsystem_devtype(raw_dev, "usb", "usb_device");
+			String usb_dev_path = udev_device_get_devnode(usb_dev);
+			
+
 
 			Properties p = new Properties();
 			p.load(new StringReader(udev_device_get_sysattr_value(hid_dev, "uevent")));
 
 			String[] hidId = ((String) p.get("HID_ID")).split(":");
 			short bus = (short) Long.parseLong(hidId[0], 16);
+			m_DeviceId = usb_dev_path;
 			m_VendorId = (short) Long.parseLong(hidId[1], 16);
 			m_ProductId = (short) Long.parseLong(hidId[2], 16);
 
@@ -92,12 +93,10 @@ public class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 					 * The device pointed to by raw_dev contains information
 					 * about the hidraw device. In order to get information
 					 * about the USB device, get the parent device with the
-					 * subsystem/devtype pair of "usb"/"usb_device". This
-					 * will be several levels up the tree, but the function
-					 * will find it.
+					 * subsystem/devtype pair of "usb"/"usb_device". This will
+					 * be several levels up the tree, but the function will find
+					 * it.
 					 */
-					udev_device usb_dev = udev_device_get_parent_with_subsystem_devtype(raw_dev, "usb", "usb_device");
-
 					if (usb_dev == null)
 						throw new IOException("usb_dev == null");
 
@@ -130,6 +129,7 @@ public class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 				udev_device_unref(raw_dev);
 			if (udev != null)
 				udev_unref(udev);
+			
 
 		}
 	}

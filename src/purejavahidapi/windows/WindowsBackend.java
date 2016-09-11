@@ -30,13 +30,10 @@
 package purejavahidapi.windows;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import purejavahidapi.DeviceRemovalListener;
 import purejavahidapi.shared.Backend;
-import purejavahidapi.shared.Frontend;
 import purejavahidapi.windows.HidLibrary.*;
 import purejavahidapi.windows.SetupApiLibrary.HDEVINFO;
 import purejavahidapi.windows.SetupApiLibrary.SP_DEVICE_INTERFACE_DATA;
@@ -64,15 +61,6 @@ public class WindowsBackend extends Backend {
 
 	}
 
-	/* package */void deviceRemoved(String deviceId) {
-		purejavahidapi.HidDevice device = getDevice(deviceId);
-		if (device != null) {
-			DeviceRemovalListener listener = device.getDeviceRemovalListener();
-			device.close();
-			if (listener != null)
-				listener.onDeviceRemoval(device);
-		}
-	}
 
 	static public void reportLastError() {
 		int rc = Native.getLastError();

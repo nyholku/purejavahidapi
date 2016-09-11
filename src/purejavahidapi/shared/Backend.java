@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
+import purejavahidapi.DeviceRemovalListener;
 import purejavahidapi.HidDevice;
 import purejavahidapi.HidDeviceInfo;
 
 abstract public class Backend {
+	// FIXME all this backend stuff is not part of the public API so it should have some access restrictions
 	private HashMap<String, HidDevice> m_OpenDevices = new HashMap<String, HidDevice>();
 
 	public abstract void init();
@@ -28,6 +30,16 @@ abstract public class Backend {
 
 	public HidDevice getDevice(String deviceId) {
 		return m_OpenDevices.get(deviceId);
+	}
+
+	public void deviceRemoved(String deviceId) {
+		purejavahidapi.HidDevice device = getDevice(deviceId);
+		if (device != null) {
+			DeviceRemovalListener listener = device.getDeviceRemovalListener();
+			device.close();
+			if (listener != null)
+				listener.onDeviceRemoval(device);
+		}
 	}
 
 }

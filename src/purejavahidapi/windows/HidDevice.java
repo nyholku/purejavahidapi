@@ -60,7 +60,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private SyncPoint m_SyncStart;
 	private SyncPoint m_SyncShutdown;
 	private boolean m_StopThread;
-	private HidDeviceInfo m_HidDeviceInfo;
 
 	/* package */HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
 		HANDLE handle = backend.openDeviceHandle(deviceInfo.getPath(), false);
@@ -106,8 +105,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
 
-		m_Backend.addDevice(deviceInfo.getDeviceId(), this);
-
 		m_Thread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -118,6 +115,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				}
 			}
 		}, m_HidDeviceInfo.getPath());
+		m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
 		m_Open = true;
 		if (m_InputReportLength > 0) {
 			m_Thread.start();
@@ -211,7 +209,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go figure
 
 	}
-
 
 	private void runReadOnBackground() {
 		m_SyncStart.waitAndSync();

@@ -34,18 +34,19 @@ import java.util.LinkedList;
 import java.util.List;
 
 import purejavahidapi.shared.Backend;
-import purejavahidapi.shared.Frontend;
 
 import com.sun.jna.Platform;
 
-/** PureJavaHidApi class is the entry point to access USB HID devices.
+/**
+ * PureJavaHidApi class is the entry point to access USB HID devices.
  * <p>
- * Static methods in PureJavaHidApi allow enumeration and opening of HID devices.
+ * Static methods in PureJavaHidApi allow enumeration and opening of HID
+ * devices.
  * <p>
- * {@link #enumerateDevices(int, int)}  method returns a iist of HidDeviceInfo
- * objects from which a device path can be obtained. The path can be passed to 
- * the {@link #openDevice(String)} method to obtain a {@link HidDevice} object which
- * can then be used to communicate with the device.
+ * {@link #enumerateDevices(int, int)} method returns a iist of HidDeviceInfo
+ * objects from which a device path can be obtained. The path can be passed to
+ * the {@link #openDevice(String)} method to obtain a {@link HidDevice} object
+ * which can then be used to communicate with the device.
  * <p>
  * See javadoc for above mentioned classes and methods for details.
  * 
@@ -61,21 +62,21 @@ public class PureJavaHidApi {
 	 * @return PureJavaHidApi library version string
 	 */
 	public String getVersion() {
-		return "0.0.5";
+		return "0.0.6";
 	}
 
 	/**
 	 * Returns a list of available USB HID devices.
 	 * <p>
-	 * Passing a 0 for the vendorId or productId macthes everything and thus works
-	 * as a wild card for matching. Passing 0 for both will return a list
+	 * Passing a 0 for the vendorId or productId macthes everything and thus
+	 * works as a wild card for matching. Passing 0 for both will return a list
 	 * of all USB HID devices.
 	 * 
 	 * @return List of HidDeviceInfo objects representing the matching devices.
 	 */
 	public static List<HidDeviceInfo> enumerateDevices() {
 		synchronized (m_Mutex) {
-			if (m_Backend==null)
+			if (m_Backend == null)
 				throw new IllegalStateException("Unsupported platform");
 			return m_Backend.enumerateDevices();
 		}
@@ -84,23 +85,26 @@ public class PureJavaHidApi {
 	/**
 	 * Given a device path opens a USB device for communication.
 	 * 
-	 * @param path A path obtained from a HidDeviceInfo object.
-	 * @return An instance of HidDevice that can be used to communicate with the HID device.
-	 * @throws IOException if the device cannot be opened
+	 * @param path
+	 *            A path obtained from a HidDeviceInfo object.
+	 * @return An instance of HidDevice that can be used to communicate with the
+	 *         HID device.
+	 * @throws IOException
+	 *             if the device cannot be opened
 	 * @see HidDeviceInfo#getPath()
 	 */
 	public static HidDevice openDevice(HidDeviceInfo path) throws IOException {
 		synchronized (m_Mutex) {
-			if (m_Backend==null)
+			if (m_Backend == null)
 				throw new IllegalStateException("Unsupported platform");
 			HidDevice device = m_Backend.openDevice(path);
-			if (device!=null)
+			if (device != null)
 				m_OpenDevices.add(device);
 			return device;
 		}
 	}
 
-	static { 
+	static {
 		if (Platform.isMac()) {
 			m_Backend = new purejavahidapi.macosx.MacOsXBackend();
 		} else if (Platform.isWindows()) {
@@ -109,7 +113,7 @@ public class PureJavaHidApi {
 			m_Backend = new purejavahidapi.linux.LinuxBackend();
 		} else
 			m_Backend = null;
-		if (m_Backend!=null)
+		if (m_Backend != null)
 			m_Backend.init();
 	}
 }
