@@ -1,3 +1,10 @@
+Version 0.0.6 (11.9.2016)
+
+* Major overhaul of the code base
+* First attempt at supporting DeviceRemovalListener on Linux
+* Changed the API, now HidDevice.open() takes HidDeviceInfo when opening a device instead of HidDeviceInfo.getPath()
+* Requires JNA platform.jar
+
 Version 0.0.5 (9.4.2016)
 
 * Fixed an other in Windows device enumeration which on some system prevented DeviceRemovalListener from being called
