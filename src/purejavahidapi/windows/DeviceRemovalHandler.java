@@ -37,7 +37,7 @@ import purejavahidapi.windows.WinDef.*;
 import static purejavahidapi.windows.WinDef.*;
 import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.User32Library.*;
-import static purejavahidapi.windows.Wtsapi32Library.*;
+import static purejavahidapi.windows.WtsApi32Library.*;
 import static purejavahidapi.windows.WindowsBackend.reportLastError;
 
 public class DeviceRemovalHandler implements WindowProc {

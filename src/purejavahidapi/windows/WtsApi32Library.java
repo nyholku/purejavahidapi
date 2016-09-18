@@ -35,10 +35,8 @@ import com.sun.jna.Native;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
-public class Wtsapi32Library {
+public class WtsApi32Library {
 	public static final int NOTIFY_FOR_THIS_SESSION = 0;
-
-	
 	
 	static Wtsapi32Interface INSTANCE = (Wtsapi32Interface) Native.loadLibrary("Wtsapi32", Wtsapi32Interface.class, W32APIOptions.UNICODE_OPTIONS);
 
