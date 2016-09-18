@@ -38,7 +38,7 @@ import com.sun.jna.win32.W32APIOptions;
 public class WtsApi32Library {
 	public static final int NOTIFY_FOR_THIS_SESSION = 0;
 	
-	static WtsApi32Interface INSTANCE = (WtsApi32Interface) Native.loadLibrary("Wtsapi32", WtsApi32Interface.class, W32APIOptions.UNICODE_OPTIONS);
+	static WtsApi32Interface INSTANCE = (WtsApi32Interface) Native.loadLibrary("wtsapi32", WtsApi32Interface.class, W32APIOptions.UNICODE_OPTIONS);
 
 	interface WtsApi32Interface extends StdCallLibrary {
 		boolean WTSRegisterSessionNotification(HWND hWnd, int dwFlags);
