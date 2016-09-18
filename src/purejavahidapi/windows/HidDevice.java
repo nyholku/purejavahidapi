@@ -131,6 +131,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 		m_StopThread = true;
 		if (m_InputReportLength > 0) {
+			CancelIoEx(m_Handle, null);
 			m_Thread.interrupt();
 			m_SyncShutdown.waitAndSync();
 		}
