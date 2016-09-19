@@ -1,3 +1,7 @@
+Version 0.0.7 (19.9.2016)
+
+* Atempt to fix a problem related to cbSize field of SP_DEVICE_INTERFACE_DETAIL_DATA which caused device enumeration to fail on certain Windows version
+
 Version 0.0.6 (11.9.2016)
 
 * Major overhaul of the code base
