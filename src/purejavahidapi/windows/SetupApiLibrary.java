@@ -29,7 +29,6 @@
  */
 package purejavahidapi.windows;
 
-
 // TODO check what is the correct way to handle windows A/W calls with JNA . How to get Strings back, check for unicode string
 // W32APIOptions.UNICODE_OPTIONS
 // TODO should we add get listener functions
@@ -130,7 +129,7 @@ import com.sun.jna.*;
 import com.sun.jna.win32.W32APIOptions;
 
 public class SetupApiLibrary {
-	static SetupApiInterface INSTANCE = (SetupApiInterface) Native.loadLibrary("setupapi", SetupApiInterface.class,W32APIOptions.UNICODE_OPTIONS);
+	static SetupApiInterface INSTANCE = (SetupApiInterface) Native.loadLibrary("setupapi", SetupApiInterface.class, W32APIOptions.UNICODE_OPTIONS);
 
 	public static final int DIGCF_PRESENT = 2;
 	public static final int DIGCF_ALLCLASSES = 4;
@@ -232,6 +231,12 @@ public class SetupApiLibrary {
 		// when accessing C API from Java with JNA
 		public char[] DevicePath;
 
+		public SP_DEVICE_INTERFACE_DETAIL_DATA_A(int cbsize, int size) {
+			cbSize = cbsize;
+			DevicePath = new char[size - 4];
+			allocateMemory();
+		}
+
 		public SP_DEVICE_INTERFACE_DETAIL_DATA_A(int size) {
 			DevicePath = new char[size - 4];
 			allocateMemory();
@@ -243,7 +248,6 @@ public class SetupApiLibrary {
 		}
 	};
 
-
 	public static class HDEVINFO extends HANDLE {
 
 		public HDEVINFO() {
@@ -254,7 +258,6 @@ public class SetupApiLibrary {
 			super(ptr);
 		}
 	};
-
 
 	final static int HIDP_STATUS_SUCCESS = 0x110000;
 
@@ -321,11 +324,9 @@ public class SetupApiLibrary {
 	static public boolean SetupDiDeleteDeviceInterfaceData(HDEVINFO DeviceInfoSet, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData) {
 		return INSTANCE.SetupDiDeleteDeviceInterfaceData(DeviceInfoSet, DeviceInterfaceData);
 	}
-	
-	
-	static public boolean SetupDiOpenDeviceInfo(HDEVINFO DeviceInfoSet, String DeviceInstanceId, HWND hwndParent, int OpenFlags, SP_DEVINFO_DATA DeviceInfoData) {
-		return INSTANCE.SetupDiOpenDeviceInfo( DeviceInfoSet,  DeviceInstanceId,  hwndParent,  OpenFlags,  DeviceInfoData);
-	}
 
+	static public boolean SetupDiOpenDeviceInfo(HDEVINFO DeviceInfoSet, String DeviceInstanceId, HWND hwndParent, int OpenFlags, SP_DEVINFO_DATA DeviceInfoData) {
+		return INSTANCE.SetupDiOpenDeviceInfo(DeviceInfoSet, DeviceInstanceId, hwndParent, OpenFlags, DeviceInfoData);
+	}
 
 }

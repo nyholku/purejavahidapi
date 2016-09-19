@@ -29,19 +29,13 @@
  */
 package purejavahidapi.windows;
 
-import java.util.Arrays;
-import java.util.List;
-
 import purejavahidapi.windows.WinDef.HANDLE;
 import purejavahidapi.windows.WinDef.HMODULE;
 import purejavahidapi.windows.WinDef.OVERLAPPED;
 import purejavahidapi.windows.WinDef.SECURITY_ATTRIBUTES;
 
-import com.sun.jna.FromNativeContext;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.PointerType;
-import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
@@ -49,6 +43,7 @@ public class Kernel32Library {
 	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.loadLibrary("kernel32", Kernel32Interface.class, W32APIOptions.UNICODE_OPTIONS);
 
 	public static final int ERROR_INSUFFICIENT_BUFFER = 122;
+	public static final int ERROR_INVALID_USER_BUFFER = 1784;
 	public static final int ERROR_NO_MORE_ITEMS = 259;
 	public static final int ERROR_INVALID_DATA = 13;
 	public static final int MAXDWORD = 0xFFFFFFFF;
@@ -89,7 +84,7 @@ public class Kernel32Library {
 	public static final int ERROR_DEVICE_NOT_CONNECTED = 1167;
 
 	public static final int IOCTL_HID_GET_FEATURE = 0xb0192;
-	
+
 	public static final int IOCTL_HID_SET_FEATURE = 0xb0191;
 
 	public interface Kernel32Interface extends StdCallLibrary {
@@ -99,6 +94,8 @@ public class Kernel32Library {
 		boolean CloseHandle(HANDLE hFile);
 
 		boolean CancelIo(HANDLE hFile);
+
+		boolean CancelIoEx(HANDLE hFile, OVERLAPPED lpOverlapped);
 
 		int WaitForSingleObject(HANDLE hHandle, int dwMilliseconds);
 
@@ -130,7 +127,10 @@ public class Kernel32Library {
 
 	public static boolean CancelIo(HANDLE hFile) {
 		return INSTANCE.CancelIo(hFile);
+	}
 
+	public static boolean CancelIoEx(HANDLE hFile, OVERLAPPED overlapped) {
+		return INSTANCE.CancelIoEx(hFile, overlapped);
 	}
 
 	public static int WaitForSingleObject(HANDLE hHandle, int dwMilliseconds) {

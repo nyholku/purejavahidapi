@@ -61,7 +61,6 @@ public class WindowsBackend extends Backend {
 
 	}
 
-
 	static public void reportLastError() {
 		int rc = Native.getLastError();
 		if (rc != 0) {
@@ -86,9 +85,6 @@ public class WindowsBackend extends Backend {
 			SP_DEVICE_INTERFACE_DATA device_interface_data = new SP_DEVICE_INTERFACE_DATA();
 			SP_DEVICE_INTERFACE_DETAIL_DATA_A device_interface_detail_data = null;
 			HDEVINFO device_info_set = null;
-			int deviceIndex = 0;
-			int i;
-
 			// Initialize the Windows objects.
 			devinfo_data.cbSize = devinfo_data.size();
 			device_interface_data.cbSize = device_interface_data.size();
@@ -98,7 +94,7 @@ public class WindowsBackend extends Backend {
 
 			// Iterate over each device in the HID class
 
-			for (;;) {
+			for (int deviceIndex = 0;; deviceIndex++) {
 				HANDLE devHandle = INVALID_HANDLE_VALUE;
 
 				if (!SetupDiEnumDeviceInterfaces(device_info_set, null, InterfaceClassGuid, deviceIndex, device_interface_data)) {
@@ -106,7 +102,6 @@ public class WindowsBackend extends Backend {
 						break;
 					reportLastError();
 				}
-				;
 
 				int[] required_size = { 0 };
 				if (!SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, null, 0, required_size, null)) {
@@ -114,12 +109,19 @@ public class WindowsBackend extends Backend {
 						reportLastError();
 				}
 
-				device_interface_detail_data = new SP_DEVICE_INTERFACE_DETAIL_DATA_A(required_size[0]);
-
 				// get the device path
-
-				if (!SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null))
-					reportLastError();
+				int[] cbSize = { 8, 6, 5 }; // horrible hack here, because it is not easy to know what cbSize is we try them all
+				for (int i = 0; i < cbSize.length; i++) {
+					device_interface_detail_data = new SP_DEVICE_INTERFACE_DETAIL_DATA_A(cbSize[i], required_size[0]);
+					if (SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null))
+						break; // ok, we guessed right so we can move on
+					device_interface_detail_data = null;
+					if (GetLastError() == ERROR_INVALID_USER_BUFFER)
+						continue; // guessed from, try again with next value
+					reportLastError(); // something else went wrong, report it
+				}
+				if (device_interface_detail_data == null)
+					continue; // this should never happen, but let's ignore it if it happens so that the enumeration will not totally fail
 
 				// Make sure this device is of Setup Class "HIDClass" and has a driver bound to it.
 				char[] driverNameChars = new char[256];
@@ -180,7 +182,7 @@ public class WindowsBackend extends Backend {
 
 					CloseHandle(devHandle);
 				}
-				deviceIndex++;
+
 			}
 
 			SetupDiDestroyDeviceInfoList(device_info_set);
