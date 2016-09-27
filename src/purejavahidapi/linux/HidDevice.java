@@ -126,7 +126,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_SyncStart.waitAndSync();
 
 		while (!m_StopThread) {
-			int pollres = poll(pfds, 1, -1);
+			int pollres = poll(pfds, 2, -1);
 			if (pollres < 0)
 				throw new IOException("pipe() failed" + Native.getLastError());
 			if (pollres > 0) {
