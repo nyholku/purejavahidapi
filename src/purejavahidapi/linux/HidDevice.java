@@ -239,7 +239,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		int data_len, key_size;
 
 		while (i < size) {
-			int key = report_descriptor[i];
+			int key = report_descriptor[i] & 0xff;
 
 			// Check for the Report ID key 
 			if (key == 0x85) {// Report ID
