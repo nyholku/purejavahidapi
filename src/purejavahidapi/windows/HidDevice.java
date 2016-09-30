@@ -250,12 +250,8 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 			if (m_InputReportBytesRead[0] > 0) {
 				byte reportID = m_InputReportMemory.getByte(0);
-				int offs = 0;
-				if (reportID == 0x00) {
-					m_InputReportBytesRead[0]--;
-					offs = 1;
-				}
-				m_InputReportMemory.read(offs, m_InputReportBytes, 0, m_InputReportBytesRead[0]);
+				m_InputReportBytesRead[0]--;
+				m_InputReportMemory.read(1, m_InputReportBytes, 0, m_InputReportBytesRead[0]);
 
 				if (m_InputReportListener != null)
 					m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, m_InputReportBytesRead[0]);
