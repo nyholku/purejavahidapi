@@ -355,6 +355,8 @@ public class HidLibrary {
 		boolean HidP_GetButtonCaps(int ReportType, HIDP_BUTTON_CAPS[] ButtonCaps, short[] ButtonCapsLength, HIDP_PREPARSED_DATA PreparsedData);
 
 		boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,byte[] Buffer,int BufferLength);
+		
+		boolean HidD_SetOutputReport(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
 	}
 
 	static public boolean HidD_GetAttributes(HANDLE HidDeviceObject, HIDD_ATTRIBUTES Attributes) {
@@ -406,8 +408,13 @@ public class HidLibrary {
 	static public boolean HidP_GetButtonCaps(int ReportType, HIDP_BUTTON_CAPS[] ValueCaps, short[] ValueCapsLength, HIDP_PREPARSED_DATA PreparsedData) {
 		return INSTANCE.HidP_GetButtonCaps(ReportType, ValueCaps, ValueCapsLength, PreparsedData);
 	}
+	
 	static public boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,byte[] Buffer,int BufferLength) {
 		return INSTANCE.HidD_GetPhysicalDescriptor(HidDeviceObject, Buffer, BufferLength);
+	}
+
+	static public boolean HidD_SetOutputReport(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength){
+		return INSTANCE.HidD_SetOutputReport(HidDeviceObject, ReportBuffer, ReportBufferLength);
 	}
 
 }
