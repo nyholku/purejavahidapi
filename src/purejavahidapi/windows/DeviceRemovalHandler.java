@@ -33,6 +33,7 @@ import static purejavahidapi.windows.SetupApiLibrary.*;
 
 import com.sun.jna.WString;
 
+import purejavahidapi.shared.SyncPoint;
 import purejavahidapi.windows.WinDef.*;
 import static purejavahidapi.windows.WinDef.*;
 import static purejavahidapi.windows.Kernel32Library.*;
@@ -42,9 +43,11 @@ import static purejavahidapi.windows.WindowsBackend.reportLastError;
 
 public class DeviceRemovalHandler implements WindowProc {
 	private WindowsBackend m_WindowsBackend;
+	private SyncPoint m_StartupSync;
 
 	public DeviceRemovalHandler(WindowsBackend windowsBackend) {
 		m_WindowsBackend = windowsBackend;
+		m_StartupSync = new SyncPoint(2);
 		Runnable threadRunnable = new Runnable() {
 			public void run() {
 				WString wndClassName = new WString("WindowClass");
@@ -78,6 +81,8 @@ public class DeviceRemovalHandler implements WindowProc {
 				if (hDevNotify == null)
 					reportLastError();
 
+				m_StartupSync.waitAndSync();
+				
 				MSG msg = new MSG();
 				while (GetMessage(msg, hWnd, 0, 0) != 0) {
 					TranslateMessage(msg);
@@ -100,6 +105,7 @@ public class DeviceRemovalHandler implements WindowProc {
 		Thread thread = new Thread(threadRunnable, this.getClass().getSimpleName());
 		thread.setDaemon(true);
 		thread.start();
+		m_StartupSync.waitAndSync();
 	}
 
 	public LRESULT callback(HWND hwnd, int uMsg, WPARAM wParam, LPARAM lParam) {
