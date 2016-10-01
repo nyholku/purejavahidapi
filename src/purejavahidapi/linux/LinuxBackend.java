@@ -65,7 +65,7 @@ public class LinuxBackend extends Backend {
 			final int udev_monitor_fd = udev_monitor_get_fd(udev_monitor);
 			//udev_unref(udev);
 
-			new Thread(new Runnable() {
+			Thread removalHandler = new Thread(new Runnable() {
 
 				@Override
 				public void run() {
@@ -90,7 +90,9 @@ public class LinuxBackend extends Backend {
 					}
 
 				}
-			}).start();
+			});
+			removalHandler.setDaemon(true);
+			removalHandler.start();
 
 		} catch (Exception e) {
 			e.printStackTrace();

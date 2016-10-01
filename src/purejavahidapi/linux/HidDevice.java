@@ -126,7 +126,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_SyncStart.waitAndSync();
 
 		while (!m_StopThread) {
-			int pollres = poll(pfds, 1, -1);
+			int pollres = poll(pfds, 2, -1);
 			if (pollres < 0)
 				throw new IOException("pipe() failed" + Native.getLastError());
 			if (pollres > 0) {
@@ -239,7 +239,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		int data_len, key_size;
 
 		while (i < size) {
-			int key = report_descriptor[i];
+			int key = report_descriptor[i] & 0xff;
 
 			// Check for the Report ID key 
 			if (key == 0x85) {// Report ID

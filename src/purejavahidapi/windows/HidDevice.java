@@ -60,6 +60,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private SyncPoint m_SyncStart;
 	private SyncPoint m_SyncShutdown;
 	private boolean m_StopThread;
+	private boolean m_ForceControlOutput;
 
 	/* package */HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
 		HANDLE handle = backend.openDeviceHandle(deviceInfo.getPath(), false);
@@ -122,6 +123,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			m_SyncStart.waitAndSync();
 		}
 
+		m_ForceControlOutput = System.getProperty("purejavahidapi.forceControlOutput") != null;
 	}
 
 	@Override
@@ -149,22 +151,33 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		// In Windows writeFile() to HID device data has to be preceded with the report number, regardless 
 		m_OutputReportMemory.write(0, new byte[] { reportID }, 0, 1);
 		m_OutputReportMemory.write(1, data, 0, length);
-		// In windows always attempt to write as many bytes as there are in the longest report plus one for the report number (even if zero ie not used)
-		if (!WriteFile(m_Handle, m_OutputReportMemory, m_OutputReportLength, null, m_OutputReportOverlapped)) {
-			if (GetLastError() != ERROR_IO_PENDING) {
-				// WriteFile() failed. Return error.
+		
+		if (!m_ForceControlOutput){
+			// In windows always attempt to write as many bytes as there are in the longest report plus one for the report number (even if zero ie not used)
+			if (!WriteFile(m_Handle, m_OutputReportMemory, m_OutputReportLength, null, m_OutputReportOverlapped)) {
+				if (GetLastError() != ERROR_IO_PENDING) {
+					// WriteFile() failed. Return error.
+					//register_error(dev, "WriteFile");
+					return -1;
+				}
+			}
+	
+			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, true/* wait */)) {
+				// The Write operation failed.
 				//register_error(dev, "WriteFile");
+				return 0;
+			}
+	
+			return m_OutputReportBytesWritten[0] - 1;
+		}else{
+			if (!HidD_SetOutputReport(m_Handle, m_OutputReportMemory.getByteArray(0, length+1), length+1)){
+				// HidD_SetOutputReport() failed. Return error.
+				//register_error(dev, "HidD_SetOutputReport");
 				return -1;
 			}
+			
+			return length;
 		}
-
-		if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, true/* wait */)) {
-			// The Write operation failed.
-			//register_error(dev, "WriteFile");
-			return 0;
-		}
-
-		return m_OutputReportBytesWritten[0] - 1;
 	}
 
 	@Override
@@ -237,12 +250,8 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 			if (m_InputReportBytesRead[0] > 0) {
 				byte reportID = m_InputReportMemory.getByte(0);
-				int offs = 0;
-				if (reportID == 0x00) {
-					m_InputReportBytesRead[0]--;
-					offs = 1;
-				}
-				m_InputReportMemory.read(offs, m_InputReportBytes, 0, m_InputReportBytesRead[0]);
+				m_InputReportBytesRead[0]--;
+				m_InputReportMemory.read(1, m_InputReportBytes, 0, m_InputReportBytesRead[0]);
 
 				if (m_InputReportListener != null)
 					m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, m_InputReportBytesRead[0]);
