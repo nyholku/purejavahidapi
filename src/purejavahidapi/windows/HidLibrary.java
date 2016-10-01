@@ -341,6 +341,8 @@ public class HidLibrary {
 		boolean HidD_GetSerialNumberString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength);
 
 		boolean HidD_GetManufacturerString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength);
+		
+		boolean HidD_GetProductString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength);
 
 		boolean HidD_SetFeature(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
 
@@ -377,12 +379,14 @@ public class HidLibrary {
 
 	static public boolean HidD_GetSerialNumberString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength) {
 		return INSTANCE.HidD_GetSerialNumberString(HidDeviceObject, Buffer, BufferLength);
-
 	}
 
 	static public boolean HidD_GetManufacturerString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength) {
 		return INSTANCE.HidD_GetManufacturerString(HidDeviceObject, Buffer, BufferLength);
-
+	}
+	
+	static public boolean HidD_GetProductString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength) {
+		return INSTANCE.HidD_GetProductString(HidDeviceObject, Buffer, BufferLength);
 	}
 
 	static public boolean HidD_SetFeature(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength) {

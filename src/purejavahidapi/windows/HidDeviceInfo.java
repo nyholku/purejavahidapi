@@ -71,6 +71,9 @@ import com.sun.jna.Pointer;
 				m_SerialNumberString = Native.toString(wstr, "utf-16le");
 			if (HidD_GetManufacturerString(handle, wstr, sizeofWstr))
 				m_ManufactureString = Native.toString(wstr, "utf-16le");
+			if (HidD_GetProductString(handle, wstr, sizeofWstr))
+				m_ProductString =  Native.toString(wstr, "utf-16le");
+				  		  
 
 		} catch (Exception e) {
 			e.printStackTrace();
