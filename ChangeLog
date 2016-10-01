@@ -1,6 +1,15 @@
+Version 0.0.8 (1.10.2016)
+
+* 	Made device removal handler thread a deamon on Linux as it is on Windows
+*	Fixed a bug in Linux which caused the input report listener thread to listen to only the nudge pipe
+*	Fixed a bad sign extension on implicit byte->int conversion in Linux 
+*   Give the user on Windows/Linux the possibility to force reports over the control pipe to work around defective device issues
+*	Added workaround to prevent a class loading deadlock when DeviceRemovalHandler starts
+*	Removed invalid condition leaving report ID in place on numbered report on Windows
+
 Version 0.0.7 (19.9.2016)
 
-* Atempt to fix a problem related to cbSize field of SP_DEVICE_INTERFACE_DETAIL_DATA which caused device enumeration to fail on certain Windows version
+* Attempt to fix a problem related to cbSize field of SP_DEVICE_INTERFACE_DETAIL_DATA which caused device enumeration to fail on certain Windows version
 
 Version 0.0.6 (11.9.2016)
 
