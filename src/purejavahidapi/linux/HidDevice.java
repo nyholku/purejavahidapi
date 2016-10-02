@@ -112,6 +112,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		}, m_HidDeviceInfo.getPath());
 		m_Backend.addDevice(m_HidDeviceInfo.getDeviceId(), this);
 		m_Open = true;
+		m_Thread.setDaemon(true);
 		m_Thread.start();
 		m_SyncStart.waitAndSync();
 	}
