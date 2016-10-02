@@ -1,3 +1,8 @@
+Version 0.0.9 (2.10.2016)
+
+*	Added missing product info string for HidDeviceInfo for Windows
+*	Make the Linux background thread into a daemon to allow clean exit
+
 Version 0.0.8 (1.10.2016)
 
 * 	Made device removal handler thread a deamon on Linux as it is on Windows
