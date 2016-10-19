@@ -64,6 +64,9 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		udev_unref(udev);
 
 		m_DeviceHandle = open(dev_path, O_RDWR);
+		if (m_DeviceHandle <= 0)
+			throw new IOException("open() failed, errno " + Native.getLastError());
+
 
 		int[] pipes = new int[2];
 		int piperes = pipe(pipes);
@@ -72,14 +75,11 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_NudgePipeReadHandle = pipes[0];
 		m_NudgePipeWriteHandle = pipes[1];
 
-		// If we have a good handle, return it.
-		if (m_DeviceHandle <= 0)
-			throw new IOException("open() failed, errno " + Native.getLastError());
-
 		// Get the report descriptor 
 		int[] desc_size = { 0 };
 		int res;
 		hidraw_report_descriptor rpt_desc = new hidraw_report_descriptor();
+		
 		// Get Report Descriptor Size 
 
 		res = ioctl(m_DeviceHandle, HIDIOCGRDESCSIZE, desc_size);
