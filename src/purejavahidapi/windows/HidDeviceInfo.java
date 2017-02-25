@@ -34,6 +34,7 @@ import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
 
 import java.nio.ByteBuffer;
 
+import com.sun.jna.Memory;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.WinDef.HANDLE;
@@ -63,17 +64,16 @@ import com.sun.jna.Pointer;
 				HidD_FreePreparsedData(ppd[0]);
 			}
 
-			byte[] wstr = new byte[256];
-			int sizeofWstr = wstr.length;
-			ByteBuffer b = ByteBuffer.wrap(wstr);
+			Memory wstr = new Memory(256);
+			int sizeofWstr = (int)(wstr.size());
 
 			if (HidD_GetSerialNumberString(handle, wstr, sizeofWstr))
-				m_SerialNumberString = Native.toString(wstr, "utf-16le");
+				m_SerialNumberString = wstr.getWideString(0);
 			if (HidD_GetManufacturerString(handle, wstr, sizeofWstr))
-				m_ManufactureString = Native.toString(wstr, "utf-16le");
+				m_ManufactureString = wstr.getWideString(0);
 			if (HidD_GetProductString(handle, wstr, sizeofWstr))
-				m_ProductString =  Native.toString(wstr, "utf-16le");
-				  		  
+				m_ProductString = wstr.getWideString(0);
+
 
 		} catch (Exception e) {
 			e.printStackTrace();
