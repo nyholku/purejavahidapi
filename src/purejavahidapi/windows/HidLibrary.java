@@ -347,7 +347,7 @@ public class HidLibrary {
 
 		boolean HidD_SetFeature(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
 
-		boolean HidD_GetFeature(HANDLE HidDeviceObject, Pointer ReportBuffer, int ReportBufferLength);
+		boolean HidD_GetFeature(HANDLE HidDeviceObject,  byte[] ReportBuffer, int ReportBufferLength);
 
 		boolean HidP_GetLinkCollectionNodes(HIDP_LINK_COLLECTION_NODE[] LinkCollectionNodes, int[] LinkCollectionNodesLength, HIDP_PREPARSED_DATA PreparsedData);
 
@@ -394,7 +394,7 @@ public class HidLibrary {
 		return INSTANCE.HidD_SetFeature(HidDeviceObject, ReportBuffer, ReportBufferLength);
 	}
 
-	static public boolean HidD_GetFeature(HANDLE HidDeviceObject, Pointer ReportBuffer, int ReportBufferLength) {
+	static public boolean HidD_GetFeature(HANDLE HidDeviceObject,  byte[] ReportBuffer, int ReportBufferLength) {
 		return INSTANCE.HidD_GetFeature(HidDeviceObject, ReportBuffer, ReportBufferLength);
 	}
 
