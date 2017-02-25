@@ -58,7 +58,7 @@ public class IOCtl {
 	}
 
 	public static int _IOC(int inout, int group, int num, int len) {
-		return (inout | ((len & IOCPARM_MASK) << 16) | ((group) << 8) | (num));
+		return ((inout << 30)  | ((group) << 8) | (num) | ((len & IOCPARM_MASK) << 16));
 	}
 
 	public static int _IO(int g, int n) {
