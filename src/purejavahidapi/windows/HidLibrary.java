@@ -38,6 +38,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
 import com.sun.jna.Union;
+import com.sun.jna.Memory;
 import com.sun.jna.win32.StdCallLibrary;
 
 import static purejavahidapi.windows.WinDef.HANDLE;
@@ -338,15 +339,15 @@ public class HidLibrary {
 
 		int HidP_GetCaps(HIDP_PREPARSED_DATA PreparsedData, HIDP_CAPS Capabilities);
 
-		boolean HidD_GetSerialNumberString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength);
+		boolean HidD_GetSerialNumberString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength);
 
-		boolean HidD_GetManufacturerString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength);
+		boolean HidD_GetManufacturerString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength);
 		
-		boolean HidD_GetProductString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength);
+		boolean HidD_GetProductString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength);
 
 		boolean HidD_SetFeature(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
 
-		boolean HidD_GetFeature(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
+		boolean HidD_GetFeature(HANDLE HidDeviceObject, Pointer ReportBuffer, int ReportBufferLength);
 
 		boolean HidP_GetLinkCollectionNodes(HIDP_LINK_COLLECTION_NODE[] LinkCollectionNodes, int[] LinkCollectionNodesLength, HIDP_PREPARSED_DATA PreparsedData);
 
@@ -356,7 +357,7 @@ public class HidLibrary {
 
 		boolean HidP_GetButtonCaps(int ReportType, HIDP_BUTTON_CAPS[] ButtonCaps, short[] ButtonCapsLength, HIDP_PREPARSED_DATA PreparsedData);
 
-		boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,byte[] Buffer,int BufferLength);
+		boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,Pointer Buffer,int BufferLength);
 		
 		boolean HidD_SetOutputReport(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
 	}
@@ -377,15 +378,15 @@ public class HidLibrary {
 		return INSTANCE.HidP_GetCaps(PreparsedData, Capabilities);
 	}
 
-	static public boolean HidD_GetSerialNumberString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength) {
+	static public boolean HidD_GetSerialNumberString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength) {
 		return INSTANCE.HidD_GetSerialNumberString(HidDeviceObject, Buffer, BufferLength);
 	}
 
-	static public boolean HidD_GetManufacturerString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength) {
+	static public boolean HidD_GetManufacturerString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength) {
 		return INSTANCE.HidD_GetManufacturerString(HidDeviceObject, Buffer, BufferLength);
 	}
 	
-	static public boolean HidD_GetProductString(HANDLE HidDeviceObject, byte[] Buffer, int BufferLength) {
+	static public boolean HidD_GetProductString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength) {
 		return INSTANCE.HidD_GetProductString(HidDeviceObject, Buffer, BufferLength);
 	}
 
@@ -393,7 +394,7 @@ public class HidLibrary {
 		return INSTANCE.HidD_SetFeature(HidDeviceObject, ReportBuffer, ReportBufferLength);
 	}
 
-	static public boolean HidD_GetFeature(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength) {
+	static public boolean HidD_GetFeature(HANDLE HidDeviceObject, Pointer ReportBuffer, int ReportBufferLength) {
 		return INSTANCE.HidD_GetFeature(HidDeviceObject, ReportBuffer, ReportBufferLength);
 	}
 
@@ -413,7 +414,7 @@ public class HidLibrary {
 		return INSTANCE.HidP_GetButtonCaps(ReportType, ValueCaps, ValueCapsLength, PreparsedData);
 	}
 	
-	static public boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,byte[] Buffer,int BufferLength) {
+	static public boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,Pointer Buffer,int BufferLength) {
 		return INSTANCE.HidD_GetPhysicalDescriptor(HidDeviceObject, Buffer, BufferLength);
 	}
 
