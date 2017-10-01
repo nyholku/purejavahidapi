@@ -195,6 +195,16 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	}
 
 	@Override
+	synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
+		byte[] buffer = new byte[length + 1];
+		buffer[0] = reportId;
+		System.arraycopy(data, 0, buffer, 1, length);
+ 		return ioctl(m_DeviceHandle, HIDIOCSFEATURE(length + 1), buffer);
+	}
+
+	@Override
 	synchronized public int setFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
