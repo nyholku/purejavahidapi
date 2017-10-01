@@ -107,7 +107,7 @@ for (HidDeviceInfo info : devList) {
 ... and then open and attach an input report listener to it:
 
 ```java
-HidDevice dev=PureJavaHidApi.openDevice(devInfo.getPath());
+HidDevice dev=PureJavaHidApi.openDevice(devInfo);
 dev.setInputReportListener(new InputReportListener() {
 	@Override
 	public void onInputReport(HidDevice source, byte Id, byte[] data, int len) {
