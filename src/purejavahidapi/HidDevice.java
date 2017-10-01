@@ -33,7 +33,7 @@ package purejavahidapi;
  * Instances of HidDevice represent a single physical USB HID device that has
  * been opened for communication.
  * <p>
- * If the {@link HidDevice.close()} has been called for an object then no more
+ * If the {@link HidDevice#close()} has been called for an object then no more
  * call should be made to any of the methods of that object and attempts to do
  * that will result in IllegalState exception being thrown.
  * <p>
@@ -171,7 +171,7 @@ abstract public class HidDevice {
 	 * @return number bytes actually sent or -1 if the call failed
 	 * 
 	 */
-        @Deprecated
+    @Deprecated
 	abstract public int setFeatureReport(byte[] data, int length);
 
 	/**
@@ -227,8 +227,8 @@ abstract public class HidDevice {
 		return m_DeviceRemovalListener;
 	}
 
-/**
-	 * This method returns the same info that the {@link PureJavaHidApi#enumerateDevices()
+    /**
+	 * This method returns the same info that the {@link PureJavaHidApi#enumerateDevices()}
 	 * would return for this device.
 	 * 
 	 * @return the device info object

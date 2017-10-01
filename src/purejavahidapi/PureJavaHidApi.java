@@ -43,9 +43,9 @@ import com.sun.jna.Platform;
  * Static methods in PureJavaHidApi allow enumeration and opening of HID
  * devices.
  * <p>
- * {@link #enumerateDevices(int, int)} method returns a iist of HidDeviceInfo
+ * {@link #enumerateDevices()} method returns a iist of HidDeviceInfo
  * objects from which a device path can be obtained. The path can be passed to
- * the {@link #openDevice(String)} method to obtain a {@link HidDevice} object
+ * the {@link #openDevice(HidDeviceInfo path)} method to obtain a {@link HidDevice} object
  * which can then be used to communicate with the device.
  * <p>
  * See javadoc for above mentioned classes and methods for details.
