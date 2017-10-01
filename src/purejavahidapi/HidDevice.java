@@ -137,12 +137,41 @@ abstract public class HidDevice {
 	 * 
 	 * @param data
 	 *            a byte array containing the data to be sent
+         * @param reportId
+         *            a byte specifying the report ID to send
 	 * @param length
 	 *            the number of bytes to send from the data array
 	 * @return number bytes actually sent or -1 if the call failed
 	 * 
 	 */
+        abstract public int setFeatureReport(byte reportId, byte[] data, int length);
 
+	/**
+	 * This method sends a feature report to the device.
+	 * <p>
+	 * See USB HID specification to learn more about feature reports.
+	 * <p>
+	 * This method may or may not block.
+	 * <p>
+	 * The method returning is no guarantee that the data has been physically
+	 * transmitted from the host to the device.
+	 * <p>
+	 * The method returns the actual number of bytes successfully scheduled to
+	 * be sent to the device.
+	 * <p>
+	 * As of this writing it is unclear under what circumstances something else
+	 * than 'length' number of bytes could be returned as well as what happens
+	 * if the report length does not match what the device expects.
+	 * <p>
+	 * 
+	 * @param data
+	 *            a byte array containing the data to be sent
+	 * @param length
+	 *            the number of bytes to send from the data array
+	 * @return number bytes actually sent or -1 if the call failed
+	 * 
+	 */
+        @Deprecated
 	abstract public int setFeatureReport(byte[] data, int length);
 
 	/**

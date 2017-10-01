@@ -4,7 +4,8 @@
 
     <groupId>purejavahidapi</groupId>
     <artifactId>purejavahidapi</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
+    <packaging>jar</packaging>
 
     <name>Pure Java HID-API</name>
     <url>https://github.com/nyholku/purejavahidapi</url>
@@ -15,6 +16,7 @@
     </properties>
 
     <build>
+        <sourceDirectory>src</sourceDirectory>
         <plugins> 
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>

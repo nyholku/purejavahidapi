@@ -278,7 +278,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			return -1;
 	}
 
-	private int setReport(int type, byte reporID, byte[] data, int length) {
+	private int setReport(int type, byte reportID, byte[] data, int length) {
 		ByteBuffer data_to_send;
 
 		int length_to_send;
@@ -288,7 +288,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		length_to_send = length;
 
 		// On Mac OS X the IOHIDDeviceSetReport() always takes pure data and explicit report number (which maybe 0 if numbers are not used)
-		res = IOHIDDeviceSetReport(m_IOHIDDeviceRef, type, 0xff & reporID, data_to_send, length_to_send);
+		res = IOHIDDeviceSetReport(m_IOHIDDeviceRef, type, 0xff & reportID, data_to_send, length_to_send);
 
 		if (res == kIOReturnSuccess) {
 			return length;
@@ -300,6 +300,12 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		return setReport(kIOHIDReportTypeOutput, reportID, data, length);
+	}
+
+	synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
+		return setReport(kIOHIDReportTypeFeature, reportId, data, length);
 	}
 
 	synchronized public int setFeatureReport(byte[] data, int length) {
