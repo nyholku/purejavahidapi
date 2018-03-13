@@ -29,19 +29,19 @@
  */
 package purejavahidapi.windows;
 
-import static purejavahidapi.windows.HidLibrary.*;
+import static purejavahidapi.windows.HidLibrary.HidD_FreePreparsedData;
+import static purejavahidapi.windows.HidLibrary.HidD_GetManufacturerString;
+import static purejavahidapi.windows.HidLibrary.HidD_GetPreparsedData;
+import static purejavahidapi.windows.HidLibrary.HidD_GetProductString;
+import static purejavahidapi.windows.HidLibrary.HidD_GetSerialNumberString;
+import static purejavahidapi.windows.HidLibrary.HidP_GetCaps;
 import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
-
-import java.nio.ByteBuffer;
 
 import com.sun.jna.Memory;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
+import purejavahidapi.windows.HidLibrary.HIDP_PREPARSED_DATA;
 import purejavahidapi.windows.WinDef.HANDLE;
-
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.Pointer;
 
 /* package*/class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
