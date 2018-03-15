@@ -349,7 +349,8 @@ public class HidDevice extends purejavahidapi.HidDevice {
 						if (HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS > 0) {
 							long remains = Duration
 									.between(Instant.now(), start.plusMillis(HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS))
-									.toMillis() + 1;
+									.toMillis() ;
+							if(remains<=0) remains=1;
 							try {
 								// tested with Ledget nano S
 								// without this delay, the second HID InputReport is missed
