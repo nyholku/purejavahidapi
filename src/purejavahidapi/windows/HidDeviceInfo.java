@@ -38,6 +38,7 @@ import static purejavahidapi.windows.HidLibrary.HidP_GetCaps;
 import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
 
 import com.sun.jna.Memory;
+
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.HidLibrary.HIDP_PREPARSED_DATA;

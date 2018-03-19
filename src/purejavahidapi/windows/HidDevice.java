@@ -90,7 +90,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private boolean m_StopThread;
 	private boolean m_ForceControlOutput;
 
-	/* package */HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
+	/* package */ HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
 		HANDLE handle = backend.openDeviceHandle(deviceInfo.getPath(), false);
 
 		if (handle == INVALID_HANDLE_VALUE)
@@ -195,14 +195,14 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			if (!WriteFile(m_Handle, m_OutputReportMemory, m_OutputReportLength, null, m_OutputReportOverlapped)) {
 				if (GetLastError() != ERROR_IO_PENDING) {
 					// WriteFile() failed. Return error.
-					//register_error(dev, "WriteFile");
+					// register_error(dev, "WriteFile");
 					return -1;
 				}
 			}
 
 			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, true/* wait */)) {
 				// The Write operation failed.
-				//register_error(dev, "WriteFile");
+				// register_error(dev, "WriteFile");
 				return 0;
 			}
 
@@ -210,7 +210,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		} else {
 			if (!HidD_SetOutputReport(m_Handle, m_OutputReportMemory.getByteArray(0, length + 1), length + 1)) {
 				// HidD_SetOutputReport() failed. Return error.
-				//register_error(dev, "HidD_SetOutputReport");
+				// register_error(dev, "HidD_SetOutputReport");
 				return -1;
 			}
 
@@ -226,7 +226,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		buffer[0] = reportId;
 		System.arraycopy(data, 0, buffer, 1, length);
 		if (!HidD_SetFeature(m_Handle, buffer, length + 1)) {
-			//register_error(dev, "HidD_SetFeature");
+			// register_error(dev, "HidD_SetFeature");
 			return -1;
 		}
 
@@ -238,7 +238,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		if (!HidD_SetFeature(m_Handle, data, length)) {
-			//register_error(dev, "HidD_SetFeature");
+			// register_error(dev, "HidD_SetFeature");
 			return -1;
 		}
 
@@ -251,7 +251,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			throw new IllegalStateException("device not open");
 		if (false) { // can't use this as it will not return the size of the report
 			if (!HidD_GetFeature(m_Handle, data, length)) {
-				//register_error(dev, "HidD_SetFeature");
+				// register_error(dev, "HidD_SetFeature");
 				System.out.println(GetLastError());
 				return -1;
 			}
@@ -263,7 +263,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			OVERLAPPED ol = new OVERLAPPED();
 			Pointer buffer = new Memory(data.length);
 			if (!DeviceIoControl(m_Handle, IOCTL_HID_GET_FEATURE, buffer, length, buffer, length, bytes, ol)) {
-				//System.out.println(GetLastError());
+				// System.out.println(GetLastError());
 				if (GetLastError() != ERROR_IO_PENDING)
 					return -1;
 			}
@@ -304,21 +304,21 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				if (GetLastError() != ERROR_IO_PENDING) {
 					CancelIo(m_Handle);
 					System.err.println("ReadFile failed with GetLastError()==" + GetLastError());
-			}
+				}
 				// System.out.println("ReadFile -> IO pending ");
 				// System.out.println("GetOverlappedResult wait");
-			if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
+				if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
 					// System.out.println("GetOverlappedResult -> err=" + GetLastError());
 					// if device disconnected or connection closed, shutdown
-				if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
-					break; // early exit if the device disappears
+					if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
+						break; // early exit if the device disappears
 					if (m_StopThread && GetLastError() == ERROR_OPERATION_ABORTED)
 						break;// on close
 					System.err.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
 				} else {
 					// System.out.println("GetOverlappedResult -> byteread=" +
 					// m_InputReportBytesRead[0]);
-			}
+				}
 
 			} else {
 				// System.out.println("ReadFile -> byteread=" + m_InputReportBytesRead[0]);
@@ -326,8 +326,8 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			byte lastReportID = -1;
 			byte[] lastDataBuff = null;
 			while (true) {
-			if (m_InputReportBytesRead[0] > 0) {
-				byte reportID = m_InputReportMemory.getByte(0);
+				if (m_InputReportBytesRead[0] > 0) {
+					byte reportID = m_InputReportMemory.getByte(0);
 					int len = m_InputReportBytesRead[0] - 1;
 					m_InputReportMemory.read(1, m_InputReportBytes, 0, len);
 					// System.out.println("buffer: len=" + len + " buf=" +
@@ -350,7 +350,8 @@ public class HidDevice extends purejavahidapi.HidDevice {
 							long remains = Duration
 									.between(Instant.now(), start.plusMillis(HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS))
 									.toMillis() ;
-							if(remains<=0) remains=1;
+							if(remains<=0) 
+								remains=1;
 							try {
 								// tested with Ledget nano S
 								// without this delay, the second HID InputReport is missed
@@ -361,7 +362,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 							} catch (InterruptedException e) {
 								Thread.currentThread().interrupt();
 							}
-			}
+						}
 						lastDataBuff = dataBuff;
 						lastReportID = reportID;
 					}
@@ -387,7 +388,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 					// GetLastError() + " byteread=" + m_InputReportBytesRead[0]);
 				}
 
-		}
+			}
 			// in case the second... GetOverlappedResult ave failed because of disconnection
 			// or close, shutdown...
 			if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
