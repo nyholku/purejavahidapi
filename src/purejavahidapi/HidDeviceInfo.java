@@ -48,6 +48,7 @@ public class HidDeviceInfo {
 	protected short m_ProductId;
 	protected short m_ReleaseNumber;
 	protected short m_UsagePage;
+	protected short m_UsageId;
 	protected String m_SerialNumberString;
 	protected String m_ManufactureString;
 	protected String m_ProductString;
@@ -121,6 +122,20 @@ public class HidDeviceInfo {
 	 */
 	public short getUsagePage() {
 		return m_UsagePage;
+	}
+
+	/**
+	 * This method returns the 16 bit Usage ID number of the device.
+	 * <p>
+	 * Note that the return type is <code>short</code> so when compared against
+	 * literals or variables of type <code>int</code> sign extension interferes
+	 * and thus it is necessary to cast the <code>int</code> type to
+	 * <code>short</code>
+	 *
+	 * @return the 16 bit Usage ID number
+	 */
+	public short getUsageId() {
+		return m_UsageId;
 	}
 
 	/**
