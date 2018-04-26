@@ -46,8 +46,6 @@ import purejavahidapi.windows.WinDef.OVERLAPPED;
 import java.io.PrintStream;
 
 public class HidDevice extends purejavahidapi.HidDevice {
-	public final boolean DUMP_CAPS_ON_OPEN = System.getProperty("purejavahidapi.dumpCapsOnOpen") != null;
-	
 	private WindowsBackend m_Backend;
 	private HANDLE m_Handle;
 	private int m_OutputReportLength;

@@ -48,6 +48,8 @@ package purejavahidapi;
  */
 
 abstract public class HidDevice {
+	protected static final boolean DUMP_CAPS_ON_OPEN = System.getProperty("purejavahidapi.dumpCapsOnOpen") != null;
+	
 	protected boolean m_Open;
 	protected InputReportListener m_InputReportListener;
 	protected DeviceRemovalListener m_DeviceRemovalListener;
