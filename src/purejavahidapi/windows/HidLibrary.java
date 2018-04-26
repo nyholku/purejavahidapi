@@ -38,7 +38,6 @@ import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
 import com.sun.jna.Union;
-import com.sun.jna.Memory;
 import com.sun.jna.win32.StdCallLibrary;
 
 import static purejavahidapi.windows.WinDef.HANDLE;
@@ -46,6 +45,44 @@ import static purejavahidapi.windows.WinDef.HANDLE;
 public class HidLibrary {
 	static HidLibraryInterface INSTANCE = (HidLibraryInterface) Native.loadLibrary("hid", HidLibraryInterface.class);
 
+	public enum HIDP_REPORT_TYPE {
+		HidP_Input(0),
+		HidP_Output(1),
+		HidP_Feature(2);
+		
+		public final int value;
+		HIDP_REPORT_TYPE(int value) { this.value = value; }
+		
+		public short getNumberButtonCaps(HIDP_CAPS caps) {
+			if (caps == null) { return 0; }
+			switch (this) {
+				case HidP_Input: return caps.NumberInputButtonCaps;
+				case HidP_Output: return caps.NumberOutputButtonCaps;
+				case HidP_Feature: return caps.NumberFeatureButtonCaps;
+			}
+			return 0;
+		}
+		public short getNumberValueCaps(HIDP_CAPS caps) {
+			if (caps == null) { return 0; }
+			switch (this) {
+				case HidP_Input: return caps.NumberInputValueCaps;
+				case HidP_Output: return caps.NumberOutputValueCaps;
+				case HidP_Feature: return caps.NumberFeatureValueCaps;
+			}
+			return 0;
+		}
+		public short getNumberDataIndices(HIDP_CAPS caps) {
+			if (caps == null) { return 0; }
+			switch (this) {
+				case HidP_Input: return caps.NumberInputDataIndices;
+				case HidP_Output: return caps.NumberOutputDataIndices;
+				case HidP_Feature: return caps.NumberFeatureDataIndices;
+			}
+			return 0;
+		}
+		
+	}
+	
 	static public class HIDP_PREPARSED_DATA extends PointerType {
 	}
 
@@ -318,15 +355,37 @@ public class HidLibrary {
 		public short OutputReportByteLength;
 		public short FeatureReportByteLength;
 		public short[] Reserved = new short[17];
-		public short[] fields_not_used_by_hidapi = new short[10];
+		public short NumberLinkCollectionNodes;
+		public short NumberInputButtonCaps;
+		public short NumberInputValueCaps;
+		public short NumberInputDataIndices;
+		public short NumberOutputButtonCaps;
+		public short NumberOutputValueCaps;
+		public short NumberOutputDataIndices;
+		public short NumberFeatureButtonCaps;
+		public short NumberFeatureValueCaps;
+		public short NumberFeatureDataIndices;
 
 		@Override
 		protected List<String> getFieldOrder() {
 			return Arrays.asList(
 					"Usage", 
 					"UsagePage",
-					"InputReportByteLength", 
-					"OutputReportByteLength", "FeatureReportByteLength", "Reserved", "fields_not_used_by_hidapi");
+					"InputReportByteLength",
+					"OutputReportByteLength",
+					"FeatureReportByteLength",
+					"Reserved",
+					"NumberLinkCollectionNodes",
+					"NumberInputButtonCaps",
+					"NumberInputValueCaps",
+					"NumberInputDataIndices",
+					"NumberOutputButtonCaps",
+					"NumberOutputValueCaps",
+					"NumberOutputDataIndices",
+					"NumberFeatureButtonCaps",
+					"NumberFeatureValueCaps",
+					"NumberFeatureDataIndices"
+			);
 		}
 	};
 
@@ -402,16 +461,16 @@ public class HidLibrary {
 		return INSTANCE.HidP_GetLinkCollectionNodes(LinkCollectionNodes, LinkCollectionNodesLength, PreparsedData);
 	}
 
-	static public boolean HidP_GetSpecificValueCaps(int ReportType, short UsagePage, short LinkCollection, short Usage, HIDP_VALUE_CAPS[] ValueCaps, short[] ValueCapsLength, HIDP_PREPARSED_DATA PreparsedData) {
-		return INSTANCE.HidP_GetSpecificValueCaps(ReportType, UsagePage, LinkCollection, Usage, ValueCaps, ValueCapsLength, PreparsedData);
+	static public boolean HidP_GetSpecificValueCaps(HIDP_REPORT_TYPE ReportType, short UsagePage, short LinkCollection, short Usage, HIDP_VALUE_CAPS[] ValueCaps, short[] ValueCapsLength, HIDP_PREPARSED_DATA PreparsedData) {
+		return INSTANCE.HidP_GetSpecificValueCaps(ReportType.value, UsagePage, LinkCollection, Usage, ValueCaps, ValueCapsLength, PreparsedData);
 	}
 
-	static public boolean HidP_GetValueCaps(int ReportType, HIDP_VALUE_CAPS[] ValueCaps, short[] ValueCapsLength, HIDP_PREPARSED_DATA PreparsedData) {
-		return INSTANCE.HidP_GetValueCaps(ReportType, ValueCaps, ValueCapsLength, PreparsedData);
+	static public boolean HidP_GetValueCaps(HIDP_REPORT_TYPE ReportType, HIDP_VALUE_CAPS[] ValueCaps, short[] ValueCapsLength, HIDP_PREPARSED_DATA PreparsedData) {
+		return INSTANCE.HidP_GetValueCaps(ReportType.value, ValueCaps, ValueCapsLength, PreparsedData);
 	}
 
-	static public boolean HidP_GetButtonCaps(int ReportType, HIDP_BUTTON_CAPS[] ValueCaps, short[] ValueCapsLength, HIDP_PREPARSED_DATA PreparsedData) {
-		return INSTANCE.HidP_GetButtonCaps(ReportType, ValueCaps, ValueCapsLength, PreparsedData);
+	static public boolean HidP_GetButtonCaps(HIDP_REPORT_TYPE ReportType, HIDP_BUTTON_CAPS[] ButtonCaps, short[] ButtonCapsLength, HIDP_PREPARSED_DATA PreparsedData) {
+		return INSTANCE.HidP_GetButtonCaps(ReportType.value, ButtonCaps, ButtonCapsLength, PreparsedData);
 	}
 	
 	static public boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,Pointer Buffer,int BufferLength) {

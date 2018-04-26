@@ -34,17 +34,20 @@ import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.SetupApiLibrary.*;
 import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
 
-import com.sun.jna.Memory;
-import com.sun.jna.NativeLong;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 
+import purejavahidapi.shared.DataDump;
 import purejavahidapi.shared.SyncPoint;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.WinDef.HANDLE;
 import purejavahidapi.windows.WinDef.OVERLAPPED;
 
+import java.io.PrintStream;
+
 public class HidDevice extends purejavahidapi.HidDevice {
+	public final boolean DUMP_CAPS_ON_OPEN = System.getProperty("purejavahidapi.dumpCapsOnOpen") != null;
+	
 	private WindowsBackend m_Backend;
 	private HANDLE m_Handle;
 	private int m_OutputReportLength;
@@ -87,6 +90,11 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			CloseHandle(handle);
 			return;
 		}
+		
+		if (DUMP_CAPS_ON_OPEN) {
+			dumpCapabilities(caps, ppd);
+		}
+		
 		m_OutputReportLength = caps.OutputReportByteLength;
 		if (m_OutputReportLength > 0)
 			m_OutputReportMemory = new Memory(m_OutputReportLength);
@@ -274,5 +282,49 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 		}
 		m_SyncShutdown.waitAndSync();
+	}
+	
+	
+	private static void dumpCapabilities(HidLibrary.HIDP_CAPS caps, HidLibrary.HIDP_PREPARSED_DATA[] ppd) {
+		PrintStream out = System.out;
+		
+		out.println("windows/HidDevice: capabilities -------------------------");
+		DataDump.dumpJnaStructures(out, caps);
+		out.println("--------------------------------------------------------");
+		
+		short numberLinkCollectionNodes = caps.NumberLinkCollectionNodes;
+		out.printf("windows/HidDevice: link collection nodes (%2d) ----------\n", numberLinkCollectionNodes);
+		if (numberLinkCollectionNodes > 0) {
+			HidLibrary.HIDP_LINK_COLLECTION_NODE[] lcNodes = new HidLibrary.HIDP_LINK_COLLECTION_NODE[numberLinkCollectionNodes];
+			int[] lcNodesLength = {numberLinkCollectionNodes};
+			HidP_GetLinkCollectionNodes(lcNodes, lcNodesLength, ppd[0]);
+			DataDump.dumpJnaStructures(out, lcNodes);
+		}
+		out.println("--------------------------------------------------------");
+		
+		for (HidLibrary.HIDP_REPORT_TYPE reportType : HidLibrary.HIDP_REPORT_TYPE.values()) {
+			short numberButtonCapNodes = reportType.getNumberButtonCaps(caps);
+			out.printf("windows/HidDevice: %12s button cap nodes (%2d) --\n", reportType, numberButtonCapNodes);
+			if (numberButtonCapNodes > 0) {
+				HidLibrary.HIDP_BUTTON_CAPS[] buttonCapNodes = new HidLibrary.HIDP_BUTTON_CAPS[numberButtonCapNodes];
+				short[] buttonCapNodesLength = {numberButtonCapNodes};
+				HidP_GetButtonCaps(reportType, buttonCapNodes, buttonCapNodesLength, ppd[0]);
+				DataDump.dumpJnaStructures(out, buttonCapNodes);
+			}
+			out.println("--------------------------------------------------------");
+		}
+		
+		for (HidLibrary.HIDP_REPORT_TYPE reportType : HidLibrary.HIDP_REPORT_TYPE.values()) {
+			short numberValueCapNodes = reportType.getNumberValueCaps(caps);
+			out.printf("windows/HidDevice: %12s  value cap nodes (%2d) --\n", reportType, numberValueCapNodes);
+			if (numberValueCapNodes > 0) {
+				HidLibrary.HIDP_VALUE_CAPS[] valueCapNodes = new HidLibrary.HIDP_VALUE_CAPS[numberValueCapNodes];
+				short[] valueCapNodesLength = {numberValueCapNodes};
+				HidP_GetValueCaps(reportType, valueCapNodes, valueCapNodesLength, ppd[0]);
+				DataDump.dumpJnaStructures(out, valueCapNodes);
+			}
+			out.println("--------------------------------------------------------");
+		}
+		
 	}
 }
