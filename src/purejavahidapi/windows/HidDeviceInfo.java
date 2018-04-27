@@ -32,16 +32,13 @@ package purejavahidapi.windows;
 import static purejavahidapi.windows.HidLibrary.*;
 import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
 
-import java.nio.ByteBuffer;
-
 import com.sun.jna.Memory;
-import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
-import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
+import purejavahidapi.dataparser.Capability;
 import purejavahidapi.windows.WinDef.HANDLE;
 
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.Pointer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /* package*/class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 
@@ -54,12 +51,79 @@ import com.sun.jna.Pointer;
 
 			HIDP_CAPS caps = new HIDP_CAPS();
 
-			// Get the Usage Page and Usage for this device.
+			// Get the report descriptors for this device.
 			HIDP_PREPARSED_DATA[] ppd = new HIDP_PREPARSED_DATA[1];
 			if (HidD_GetPreparsedData(handle, ppd)) {
 				if (HidP_GetCaps(ppd[0], caps) == HIDP_STATUS_SUCCESS) {
 					m_UsagePage = caps.UsagePage;
 					m_UsageId = caps.Usage;
+					
+					HIDP_REPORT_TYPE[] reportTypes = HIDP_REPORT_TYPE.values();
+					ArrayList<Capability> capabilities = new ArrayList<>();
+					Map<Byte, Integer> reportBitOffsetByReportId = new HashMap<>();
+					for (HIDP_REPORT_TYPE reportType : reportTypes) {
+						Capability.Type capabilityType = null;
+						switch (reportType) {
+							case HidP_Input: capabilityType = Capability.Type.INPUT; break;
+							case HidP_Output: capabilityType = Capability.Type.OUTPUT; break;
+							case HidP_Feature: capabilityType = Capability.Type.FEATURE; break;
+						}
+						short numberButtonCapNodes = reportType.getNumberButtonCaps(caps);
+						if (numberButtonCapNodes > 0) {
+							HIDP_BUTTON_CAPS[] buttonCapNodes = new HIDP_BUTTON_CAPS[numberButtonCapNodes];
+							short[] buttonCapNodesLength = {numberButtonCapNodes};
+							HidP_GetButtonCaps(reportType, buttonCapNodes, buttonCapNodesLength, ppd[0]);
+							for (HIDP_BUTTON_CAPS buttonCapNode : buttonCapNodes) {
+								boolean isRange = buttonCapNode.IsRange != 0;
+								byte reportId = buttonCapNode.ReportID;
+								int reportBitOffset = reportBitOffsetByReportId.getOrDefault(reportId, 0);
+								short usageMin = isRange ? buttonCapNode.u.Range.UsageMin : 0;
+								short usageMax = isRange ? buttonCapNode.u.Range.UsageMax : 0;
+								Capability.ButtonRange buttonRange = new Capability.ButtonRange(
+									capabilityType,
+									reportId,
+									reportBitOffset, // TODO: what if the data indices come back in the wrong order??
+									isRange ? buttonCapNode.u.Range.DataIndexMin : -1,
+									isRange ? buttonCapNode.u.Range.DataIndexMax : -1,
+									buttonCapNode.UsagePage,
+									usageMin,
+									usageMax
+								);
+								int reportBitLength = buttonRange.getReportBitLength();
+								reportBitOffsetByReportId.put(reportId, reportBitOffset + reportBitLength);
+								capabilities.add(buttonRange);
+							}
+						}
+						short numberValueCapNodes = reportType.getNumberValueCaps(caps);
+						if (numberValueCapNodes > 0) {
+							HIDP_VALUE_CAPS[] valueCapNodes = new HIDP_VALUE_CAPS[numberValueCapNodes];
+							short[] valueCapNodesLength = {numberValueCapNodes};
+							HidP_GetValueCaps(reportType, valueCapNodes, valueCapNodesLength, ppd[0]);
+							for (HIDP_VALUE_CAPS valueCapNode : valueCapNodes) {
+								boolean isRange = valueCapNode.IsRange != 0;
+								byte reportId = valueCapNode.ReportID;
+								int reportBitOffset = reportBitOffsetByReportId.getOrDefault(reportId, 0);
+								Capability.Value value = new Capability.Value(
+									capabilityType,
+									reportId,
+									reportBitOffset,
+									isRange ? -1 : valueCapNode.u.NotRange.DataIndex,
+									isRange ? -1 : valueCapNode.u.NotRange.DataIndex,
+									valueCapNode.UsagePage,
+									isRange ? 0 : valueCapNode.u.NotRange.Usage,
+									valueCapNode.LogicalMin.longValue(),
+									valueCapNode.LogicalMax.longValue(),
+									valueCapNode.BitSize,
+									valueCapNode.ReportCount
+								);
+								int reportBitLength = value.getReportBitLength();
+								reportBitOffsetByReportId.put(reportId, reportBitOffset + reportBitLength);
+								capabilities.add(value);
+							}
+						}
+					}
+					m_Capabilities = new Capability[capabilities.size()];
+					capabilities.toArray(m_Capabilities);
 				}
 
 				HidD_FreePreparsedData(ppd[0]);

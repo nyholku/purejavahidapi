@@ -29,6 +29,8 @@
  */
 package purejavahidapi;
 
+import purejavahidapi.dataparser.Capability;
+
 /**
  * HidDeviceInfo instances represent all that can be found out about a specific
  * connected USB HID device without actually opening it. Basically the
@@ -52,6 +54,7 @@ public class HidDeviceInfo {
 	protected String m_SerialNumberString;
 	protected String m_ManufactureString;
 	protected String m_ProductString;
+	protected Capability[] m_Capabilities;
 
     /**
 	 * This method returns a string that represents a platform dependent path
@@ -174,5 +177,8 @@ public class HidDeviceInfo {
 	public String getDeviceId() {
 		return m_DeviceId;
 	}
-
+	
+	public Capability[] getCapabilities() {
+		return m_Capabilities;
+	}
 }
