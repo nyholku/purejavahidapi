@@ -266,6 +266,10 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
 				if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 					break; // early exit if the device disappears
+				
+				if(m_StopThread && GetLastError() == ERROR_OPERATION_ABORTED)
+					break; // on close
+				
 				System.out.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
 			}
 
