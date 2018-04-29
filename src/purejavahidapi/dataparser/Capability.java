@@ -84,7 +84,7 @@ public abstract class Capability {
 			short usageMin,
 			short usageMax
 		) {
-			super(type, reportId, reportBitOffset, dataIndexMin, dataIndexMax, usageMax - usageMin + 1, usagePage);
+			super(type, reportId, reportBitOffset, usageMax - usageMin + 1, dataIndexMin, dataIndexMax, usagePage);
 			m_UsageMin = usageMin;
 			m_UsageMax = usageMax;
 		}
@@ -113,7 +113,7 @@ public abstract class Capability {
 			int bitSize,
 			int reportCount
 		) {
-			super(type, reportId, reportBitOffset, dataIndexMin, dataIndexMax, bitSize * reportCount, usagePage);
+			super(type, reportId, reportBitOffset, bitSize * reportCount, dataIndexMin, dataIndexMax, usagePage);
 			m_Usage = usage;
 			m_LogicalMin = logicalMin;
 			m_LogicalMax = logicalMax;

@@ -62,7 +62,7 @@ public class HidDataParser {
 		Capability[] deviceCapabilities = deviceInfo.getCapabilities();
 		if (deviceCapabilities == null) { return null; }
 		Capability[] reportCapabilities = Stream.of(deviceCapabilities)
-			.filter(cap -> cap.getReportId() == reportID)
+			.filter(cap -> cap.getType() == Capability.Type.INPUT && cap.getReportId() == reportID)
 			.sorted(Comparator.comparingInt(Capability::getDataIndexMin))
 			.toArray(Capability[]::new);
 		ParsedReportDataItem[] results = new ParsedReportDataItem[reportCapabilities.length];
@@ -78,7 +78,7 @@ public class HidDataParser {
 				boolean[] parsedButtonRange = new boolean[reportBitLength];
 				int p = 0;
 				for (byte b : extractedData) {
-					for (int mask = 1; mask < 0x100; mask <<= 1, ++p) {
+					for (int mask = 1; mask < 0x100 && p < reportBitLength; mask <<= 1, ++p) {
 						parsedButtonRange[p] = (b & mask) != 0;
 					}
 				}
@@ -122,7 +122,7 @@ public class HidDataParser {
 		for (int i = 0, off = courseByteOffset; i < extractedByteLength; ++i, ++off) {
 			byte result = 0;
 			byte bCurrent = buffer[off];
-			byte lo = (byte)((bCurrent & maskHigh) >> fineByteOffsetAdjustment);
+			byte lo = (byte)((bCurrent & maskHigh) >>> fineByteOffsetAdjustment);
 			result |= lo;
 			if (maskLow != 0) {
 				byte bNext = buffer[off + 1];

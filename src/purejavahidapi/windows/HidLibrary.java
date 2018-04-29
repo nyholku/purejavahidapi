@@ -177,8 +177,22 @@ public class HidLibrary {
 		public HIDP_VALUE_CAPS_Range Range;
 		public HIDP_VALUE_CAPS_NotRange NotRange;
 	}
+	
+	public interface HidPDataIndexedCaps {
+		byte getReportID();
+		byte getIsRange();
+		HIDP_CAPS_union getRangeUnion();
+		
+		default short getDataIndexMin() {
+			return getIsRange() == 0 ? getRangeUnion().NotRange.DataIndex : getRangeUnion().Range.DataIndexMin;
+		}
+		
+		default short getDataIndexMax() {
+			return getIsRange() == 0 ? getRangeUnion().NotRange.DataIndex : getRangeUnion().Range.DataIndexMax;
+		}
+	}
 
-	public static class HIDP_VALUE_CAPS extends Structure {
+	public static class HIDP_VALUE_CAPS extends Structure implements HidPDataIndexedCaps {
 		public short UsagePage;
 		public byte ReportID;
 		public byte IsAlias;
@@ -279,10 +293,19 @@ public class HidLibrary {
 			);
 
 		}
+		
+		@Override
+		public byte getReportID() { return ReportID; }
+		
+		@Override
+		public byte getIsRange() { return IsRange; }
+		
+		@Override
+		public HIDP_CAPS_union getRangeUnion() { return u; }
 
 	}
 
-	public static class HIDP_BUTTON_CAPS extends Structure {
+	public static class HIDP_BUTTON_CAPS extends Structure implements HidPDataIndexedCaps {
 		public short UsagePage;
 		public byte ReportID;
 		public byte IsAlias;
@@ -345,6 +368,15 @@ public class HidLibrary {
 					"u"//
 			);
 		}
+		
+		@Override
+		public byte getReportID() { return ReportID; }
+		
+		@Override
+		public byte getIsRange() { return IsRange; }
+		
+		@Override
+		public HIDP_CAPS_union getRangeUnion() { return u; }
 
 	}
 
