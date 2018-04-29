@@ -30,84 +30,10 @@
  */
 package purejavahidapi.dataparser;
 
-import purejavahidapi.HidDevice;
-import purejavahidapi.HidDeviceInfo;
-
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.stream.Stream;
-
 /**
  * @author nsaney
  */
 public class HidDataParser {
-	/**
-	 * On systems that support reading of report descriptors
-	 * (currently only Windows, as of v0.0.11), this method can
-	 * be used for parsing report data from the descriptors that
-	 * match the given report ID.
-	 *
-	 * If the calling system does not support reading of report
-	 * descriptors, then this method will return null.
-	 *
-	 * @param source the HidDevice object
-	 * @param reportID the report Id number if used or zero
-	 * @param reportData the report data
-	 * @param reportLength report length
-	 * @return an array of {@code ParsedReportDataItem} if reading
-	 *         of report descriptors is supported, or null otherwise.
-	 */
-	public static ParsedReportDataItem[] getParsedReportData(
-		HidDevice source,
-		final byte reportID,
-		byte[] reportData,
-		int reportLength
-	) {
-		if (source == null) { return null; }
-		HidDeviceInfo deviceInfo = source.getHidDeviceInfo();
-		if (deviceInfo == null) { return null; }
-		Capability[] deviceCapabilities = deviceInfo.getCapabilities();
-		if (deviceCapabilities == null) { return null; }
-		Capability[] reportCapabilities = Stream.of(deviceCapabilities)
-			.filter(cap -> cap.getType() == Capability.Type.INPUT && cap.getReportId() == reportID)
-			.sorted(Comparator.comparingInt(Capability::getDataIndexMin))
-			.toArray(Capability[]::new);
-		ParsedReportDataItem[] results = new ParsedReportDataItem[reportCapabilities.length];
-		if (reportData.length != reportLength) { reportData = Arrays.copyOf(reportData, reportLength); }
-		for (int i = 0; i < reportCapabilities.length; ++i) {
-			Capability cap = reportCapabilities[i];
-			ParsedReportDataItem parsedReportDataItem;
-			int reportBitOffset = cap.getReportBitOffset();
-			int reportBitLength = cap.getReportBitLength();
-			byte[] extractedData = extractDataAtBitOffset(reportData, reportBitOffset, reportBitLength);
-			if (cap instanceof Capability.ButtonRange) {
-				Capability.ButtonRange buttonRange = (Capability.ButtonRange)cap;
-				boolean[] parsedButtonRange = new boolean[reportBitLength];
-				int p = 0;
-				for (byte b : extractedData) {
-					for (int mask = 1; mask < 0x100 && p < reportBitLength; mask <<= 1, ++p) {
-						parsedButtonRange[p] = (b & mask) != 0;
-					}
-				}
-				parsedReportDataItem = new ParsedReportDataItem(buttonRange, parsedButtonRange);
-			}
-			else if (cap instanceof Capability.Value) {
-				Capability.Value value = (Capability.Value)cap;
-				long[] parsedValues = new long[value.getReportCount()];
-				int p = 0;
-				for (int offset = 0; offset < extractedData.length; offset += Long.BYTES, ++p) {
-					parsedValues[p] = bytesToLong(extractedData, offset);
-				}
-				parsedReportDataItem = new ParsedReportDataItem(value, parsedValues);
-			}
-			else {
-				parsedReportDataItem = new ParsedReportDataItem(cap);
-			}
-			results[i] = parsedReportDataItem;
-		}
-		return results;
-	}
-	
 	/**
 	 * Extracts data from the given buffer using bit (NOT byte)
 	 * offset and length values.

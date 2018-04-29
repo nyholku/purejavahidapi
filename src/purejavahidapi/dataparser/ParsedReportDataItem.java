@@ -6,10 +6,10 @@
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
- * Redistributions of source code must retain the above copyright notice, this list
+ * Redistributions of source code must retain the above copyright notices, this list
  * of conditions and the following disclaimer.
  *
- * Redistributions in binary form must reproduce the above copyright notice, this
+ * Redistributions in binary form must reproduce the above copyright notices, this
  * list of conditions and the following disclaimer in the documentation and/or other
  * materials provided with the distribution.
  *
@@ -35,28 +35,29 @@ package purejavahidapi.dataparser;
  */
 public class ParsedReportDataItem {
 	Capability m_Capability;
-	boolean[] m_ParsedButtonRange;
+	short[] m_ParsedButtons;
 	long[] m_ParsedValues;
 	
-	public ParsedReportDataItem(Capability.ButtonRange buttonRange, boolean[] parsedButtonRange) {
-		m_Capability = buttonRange;
-		m_ParsedButtonRange = parsedButtonRange;
-		m_ParsedValues = null;
-	}
-	
-	public ParsedReportDataItem(Capability.Value value, long[] parsedValues) {
-		m_Capability = value;
-		m_ParsedButtonRange = null;
+	private ParsedReportDataItem(Capability capability, short[] parsedButtons, long[] parsedValues) {
+		m_Capability = capability;
+		m_ParsedButtons = parsedButtons;
 		m_ParsedValues = parsedValues;
 	}
 	
+	public ParsedReportDataItem(Capability.ButtonRange buttonRange, short[] parsedButtons) {
+		this(buttonRange, parsedButtons, null);
+	}
+	
+	public ParsedReportDataItem(Capability.Value value, long[] parsedValues) {
+		this(value, null, parsedValues);
+	}
+	
 	public ParsedReportDataItem(Capability capability) {
-	    m_Capability = capability;
-	    m_ParsedButtonRange = null;
-	    m_ParsedValues = null;
-    }
+		this(capability, null, null);
+	}
 	
 	public Capability getCapability() { return m_Capability; }
-	public boolean[] getParsedButtonRange() { return m_ParsedButtonRange; }
+	public boolean getIsParsed() { return m_ParsedButtons != null || m_ParsedValues != null; }
+	public short[] getParsedButtons() { return m_ParsedButtons; }
 	public long[] getParsedValues() { return m_ParsedValues; }
 }

@@ -1,35 +1,37 @@
 /*
  * Copyright (c) 2014, Kustaa Nyholm / SpareTimeLabs
+ * Copyright (c) 2018, Nicholas Saney / Chairosoft
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
- * Redistributions of source code must retain the above copyright notice, this list 
+ * Redistributions of source code must retain the above copyright notices, this list
  * of conditions and the following disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this 
+ *
+ * Redistributions in binary form must reproduce the above copyright notices, this
  * list of conditions and the following disclaimer in the documentation and/or other
  * materials provided with the distribution.
- *  
- * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its 
- * contributors may be used to endorse or promote products derived from this software 
+ *
+ * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its
+ * contributors may be used to endorse or promote products derived from this software
  * without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
 package purejavahidapi.windows;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import com.sun.jna.Native;
@@ -39,6 +41,7 @@ import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
 import com.sun.jna.Union;
 import com.sun.jna.win32.StdCallLibrary;
+import purejavahidapi.dataparser.Capability;
 
 import static purejavahidapi.windows.WinDef.HANDLE;
 
@@ -46,12 +49,25 @@ public class HidLibrary {
 	static HidLibraryInterface INSTANCE = (HidLibraryInterface) Native.loadLibrary("hid", HidLibraryInterface.class);
 
 	public enum HIDP_REPORT_TYPE {
-		HidP_Input(0),
-		HidP_Output(1),
-		HidP_Feature(2);
+		HidP_Input(0, Capability.Type.INPUT),
+		HidP_Output(1, Capability.Type.OUTPUT),
+		HidP_Feature(2, Capability.Type.FEATURE);
 		
 		public final int value;
-		HIDP_REPORT_TYPE(int value) { this.value = value; }
+		public final Capability.Type capabilityType;
+		HIDP_REPORT_TYPE(int value, Capability.Type capabilityType) {
+			this.value = value;
+			this.capabilityType = capabilityType;
+		}
+		
+		public static HIDP_REPORT_TYPE fromCapabilityType(Capability.Type capabilityType) {
+			for (HIDP_REPORT_TYPE reportType : values()) {
+				if (reportType.capabilityType == capabilityType) {
+					return reportType;
+				}
+			}
+			throw new IllegalArgumentException("Unable to find HIDP_REPORT_TYPE for Capability.Type = " + capabilityType);
+		}
 		
 		public short getNumberButtonCaps(HIDP_CAPS caps) {
 			if (caps == null) { return 0; }
@@ -81,6 +97,53 @@ public class HidLibrary {
 			return 0;
 		}
 		
+	}
+	
+	/**
+	 * The set of NTSTATUS codes returned by functions in this library.
+	 * Based on the hidpi.h source code.
+	 * Search for "#define FACILITY_HID_ERROR_CODE".
+	 */
+	public enum HIDP_STATUS {
+		SUCCESS                 (0x0, 0),
+		NULL                    (0x8, 1),
+		INVALID_PREPARSED_DATA  (0xC, 1),
+		INVALID_REPORT_TYPE     (0xC, 2),
+		INVALID_REPORT_LENGTH   (0xC, 3),
+		USAGE_NOT_FOUND         (0xC, 4),
+		VALUE_OUT_OF_RANGE      (0xC, 5),
+		BAD_LOG_PHY_VALUES      (0xC, 6),
+		BUFFER_TOO_SMALL        (0xC, 7),
+		INTERNAL_ERROR          (0xC, 8),
+		I8042_TRANS_UNKNOWN     (0xC, 9),
+		INCOMPATIBLE_REPORT_ID  (0xC, 0xA),
+		NOT_VALUE_ARRAY         (0xC, 0xB),
+		IS_VALUE_ARRAY          (0xC, 0xC),
+		DATA_INDEX_NOT_FOUND    (0xC, 0xD),
+		DATA_INDEX_OUT_OF_RANGE (0xC, 0xE),
+		BUTTON_NOT_PRESSED      (0xC, 0xF),
+		REPORT_DOES_NOT_EXIST   (0xC, 0x10),
+		NOT_IMPLEMENTED         (0xC, 0x20);
+		
+		public static final long FACILITY_HID_ERROR_CODE = 0x11;
+		public final long value;
+		HIDP_STATUS(long severity, long code) {
+			this.value = (severity << 28) | (FACILITY_HID_ERROR_CODE << 16) | code;
+		}
+		
+		@Override
+		public String toString() { return "HIDP_STATUS_" + super.toString(); }
+		
+		// inverse lookup
+		private static final HashMap<Long, HIDP_STATUS> VALUES_LOOKUP = new HashMap<>(values().length);
+		static {
+			for (HIDP_STATUS hidpStatus : values()) {
+				VALUES_LOOKUP.put(hidpStatus.value, hidpStatus);
+			}
+		}
+		public static HIDP_STATUS fromValue(long value) {
+			return VALUES_LOOKUP.get(value);
+		}
 	}
 	
 	static public class HIDP_PREPARSED_DATA extends PointerType {
@@ -451,6 +514,14 @@ public class HidLibrary {
 		boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,Pointer Buffer,int BufferLength);
 		
 		boolean HidD_SetOutputReport(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
+		
+		long HidP_MaxUsageListLength(int ReportType, short UsagePage, HIDP_PREPARSED_DATA PreparsedData);
+		
+		long HidP_GetUsages(int ReportType, short UsagePage, short LinkCollection, short[] UsageList, long[] UsageLength, HIDP_PREPARSED_DATA PreparsedData, byte[] Report, long ReportLength);
+		
+		long HidP_GetUsageValue(int ReportType, short UsagePage, short LinkCollection, short Usage, long[] UsageValue, HIDP_PREPARSED_DATA PreparsedData, byte[] Report, long ReportLength);
+		
+		long HidP_GetUsageValueArray(int ReportType, short UsagePage, short LinkCollection, short Usage, byte[] UsageValue, short UsageValueByteLength, HIDP_PREPARSED_DATA PreparsedData, byte[] Report, long ReportLength);
 	}
 
 	static public boolean HidD_GetAttributes(HANDLE HidDeviceObject, HIDD_ATTRIBUTES Attributes) {
@@ -512,5 +583,23 @@ public class HidLibrary {
 	static public boolean HidD_SetOutputReport(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength){
 		return INSTANCE.HidD_SetOutputReport(HidDeviceObject, ReportBuffer, ReportBufferLength);
 	}
-
+	
+	static public long HidP_MaxUsageListLength(HIDP_REPORT_TYPE ReportType, short UsagePage, HIDP_PREPARSED_DATA PreparsedData) {
+		return INSTANCE.HidP_MaxUsageListLength(ReportType.value, UsagePage, PreparsedData);
+	}
+	
+	static public HIDP_STATUS HidP_GetButtons(HIDP_REPORT_TYPE ReportType, short UsagePage, short LinkCollection, short[] UsageList, long[] UsageLength, HIDP_PREPARSED_DATA PreparsedData, byte[] Report, long ReportLength) {
+		long statusValue = INSTANCE.HidP_GetUsages(ReportType.value, UsagePage, LinkCollection, UsageList, UsageLength, PreparsedData, Report, ReportLength);
+		return HIDP_STATUS.fromValue(statusValue);
+	}
+	
+	static public HIDP_STATUS HidP_GetUsageValue(HIDP_REPORT_TYPE ReportType, short UsagePage, short LinkCollection, short Usage, long[] UsageValue, HIDP_PREPARSED_DATA PreparsedData, byte[] Report, long ReportLength) {
+		long statusValue = INSTANCE.HidP_GetUsageValue(ReportType.value, UsagePage, LinkCollection, Usage, UsageValue, PreparsedData, Report, ReportLength);
+		return HIDP_STATUS.fromValue(statusValue);
+	}
+	
+	static public HIDP_STATUS HidP_GetUsageValueArray(HIDP_REPORT_TYPE ReportType, short UsagePage, short LinkCollection, short Usage, byte[] UsageValue, short UsageValueByteLength, HIDP_PREPARSED_DATA PreparsedData, byte[] Report, long ReportLength) {
+		long statusValue = INSTANCE.HidP_GetUsageValueArray(ReportType.value, UsagePage, LinkCollection, Usage, UsageValue, UsageValueByteLength, PreparsedData, Report, ReportLength);
+		return HIDP_STATUS.fromValue(statusValue);
+	}
 }

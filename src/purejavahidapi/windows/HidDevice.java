@@ -1,29 +1,30 @@
 /*
  * Copyright (c) 2014, Kustaa Nyholm / SpareTimeLabs
+ * Copyright (c) 2018, Nicholas Saney / Chairosoft
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
- * Redistributions of source code must retain the above copyright notice, this list 
+ * Redistributions of source code must retain the above copyright notices, this list
  * of conditions and the following disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this 
+ *
+ * Redistributions in binary form must reproduce the above copyright notices, this
  * list of conditions and the following disclaimer in the documentation and/or other
  * materials provided with the distribution.
- *  
- * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its 
- * contributors may be used to endorse or promote products derived from this software 
+ *
+ * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its
+ * contributors may be used to endorse or promote products derived from this software
  * without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
@@ -36,6 +37,9 @@ import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
 
 import com.sun.jna.*;
 
+import purejavahidapi.dataparser.Capability;
+import purejavahidapi.dataparser.HidDataParser;
+import purejavahidapi.dataparser.ParsedReportDataItem;
 import purejavahidapi.shared.DataDump;
 import purejavahidapi.shared.SyncPoint;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
@@ -44,6 +48,9 @@ import purejavahidapi.windows.WinDef.HANDLE;
 import purejavahidapi.windows.WinDef.OVERLAPPED;
 
 import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 public class HidDevice extends purejavahidapi.HidDevice {
 	private WindowsBackend m_Backend;
@@ -62,6 +69,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private SyncPoint m_SyncShutdown;
 	private boolean m_StopThread;
 	private boolean m_ForceControlOutput;
+	private HIDP_PREPARSED_DATA m_PreparsedData;
 
 	/* package */HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
 		HANDLE handle = backend.openDeviceHandle(deviceInfo.getPath(), false);
@@ -82,15 +90,16 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			CloseHandle(handle);
 			return;
 		}
+		m_PreparsedData = ppd[0];
 		HIDP_CAPS caps = new HIDP_CAPS();
-		int nt_res = HidP_GetCaps(ppd[0], caps);
+		int nt_res = HidP_GetCaps(m_PreparsedData, caps);
 		if (nt_res != HIDP_STATUS_SUCCESS) {
 			CloseHandle(handle);
 			return;
 		}
 		
 		if (DUMP_CAPS_ON_OPEN) {
-			dumpCapabilities(caps, ppd);
+			dumpCapabilities(caps);
 		}
 		
 		m_OutputReportLength = caps.OutputReportByteLength;
@@ -107,7 +116,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		}
 		m_InputReportBytesRead = new int[] { 0 };
 
-		HidD_FreePreparsedData(ppd[0]);
+//		HidD_FreePreparsedData(m_PreparsedData); // moved to close
 
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
@@ -143,6 +152,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			m_Thread.interrupt();
 			m_SyncShutdown.waitAndSync();
 		}
+		HidD_FreePreparsedData(m_PreparsedData);
 		CloseHandle(m_Handle);
 		m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
 		m_Open = false;
@@ -286,8 +296,106 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_SyncShutdown.waitAndSync();
 	}
 	
+	@Override
+	public ParsedReportDataItem[] parseReport(Capability.Type capabilityType, byte reportID, byte[] reportData, int reportLength) {
+		if (m_HidDeviceInfo == null) { return null; }
+		Capability[] deviceCapabilities = m_HidDeviceInfo.getCapabilities();
+		if (deviceCapabilities == null) { return null; }
+		
+		HIDP_REPORT_TYPE reportType = HIDP_REPORT_TYPE.fromCapabilityType(capabilityType);
+		byte[] originalReportData = new byte[1 + reportLength];
+		originalReportData[0] = reportID;
+		System.arraycopy(reportData, 0, originalReportData, 1, reportLength);
+		
+		Capability[] reportCapabilities = Stream.of(deviceCapabilities)
+			.filter(cap -> cap.getType() == capabilityType && cap.getReportId() == reportID)
+			.sorted(Comparator.comparingInt(Capability::getDataIndexMin))
+			.toArray(Capability[]::new);
+		ParsedReportDataItem[] results = new ParsedReportDataItem[reportCapabilities.length];
+		for (int i = 0; i < reportCapabilities.length; ++i) {
+			Capability cap = reportCapabilities[i];
+			ParsedReportDataItem parsedReportDataItem;
+			short usagePage = cap.getUsagePage();
+			short linkCollection = cap.getLinkCollection();
+			if (cap instanceof Capability.ButtonRange) {
+				Capability.ButtonRange buttonRange = (Capability.ButtonRange)cap;
+				long maxUsageLength = HidP_MaxUsageListLength(reportType, usagePage, m_PreparsedData);
+				short[] usageList = new short[(int)maxUsageLength];
+				long[] usageLength = { maxUsageLength };
+				HIDP_STATUS hidpStatus = HidP_GetButtons(
+					reportType,
+					usagePage,
+					linkCollection,
+					usageList,
+					usageLength,
+					m_PreparsedData,
+					originalReportData,
+					originalReportData.length
+				);
+				if (hidpStatus == HIDP_STATUS.SUCCESS) {
+					usageList = Arrays.copyOf(usageList, (int)usageLength[0]);
+				}
+				else {
+					usageList = null;
+				}
+				parsedReportDataItem = new ParsedReportDataItem(buttonRange, usageList);
+			}
+			else if (cap instanceof Capability.Value) {
+				Capability.Value value = (Capability.Value)cap;
+				short usage = value.getUsage();
+				short usageValueByteLength = value.getReportByteLengthWithPadding();
+				int reportCount = value.getReportCount();
+				long[] parsedValues = new long[reportCount];
+				HIDP_STATUS hidpStatus = null;
+				if (reportCount == 1) {
+					hidpStatus = HidP_GetUsageValue(
+						reportType,
+						usagePage,
+						linkCollection,
+						usage,
+						parsedValues,
+						m_PreparsedData,
+						originalReportData,
+						originalReportData.length
+					);
+				}
+				else if (reportCount > 1) {
+					byte[] usageValue = new byte[usageValueByteLength];
+					hidpStatus = HidP_GetUsageValueArray(
+						reportType,
+						usagePage,
+						linkCollection,
+						usage,
+						usageValue,
+						usageValueByteLength,
+						m_PreparsedData,
+						originalReportData,
+						originalReportData.length
+					);
+					if (hidpStatus == HIDP_STATUS.SUCCESS) {
+						int bitSize = value.getBitSize();
+						int reportBitLength = value.getReportBitLength();
+						for (int b = 0, v = 0; b < reportBitLength; b += bitSize, ++v) {
+							byte[] extractedData = HidDataParser.extractDataAtBitOffset(usageValue, b, bitSize);
+							long parsedValue = HidDataParser.bytesToLong(extractedData, 0);
+							parsedValues[v] = parsedValue;
+						}
+					}
+				}
+				if (hidpStatus != HIDP_STATUS.SUCCESS) {
+					parsedValues = null;
+				}
+				parsedReportDataItem = new ParsedReportDataItem(value, parsedValues);
+			}
+			else {
+				parsedReportDataItem = new ParsedReportDataItem(cap);
+			}
+			results[i] = parsedReportDataItem;
+		}
+		return results;
+	}
 	
-	private static void dumpCapabilities(HidLibrary.HIDP_CAPS caps, HidLibrary.HIDP_PREPARSED_DATA[] ppd) {
+	private void dumpCapabilities(HIDP_CAPS caps) {
 		PrintStream out = System.out;
 		
 		out.println("windows/HidDevice: capabilities -------------------------");
@@ -299,7 +407,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		if (numberLinkCollectionNodes > 0) {
 			HidLibrary.HIDP_LINK_COLLECTION_NODE[] lcNodes = new HidLibrary.HIDP_LINK_COLLECTION_NODE[numberLinkCollectionNodes];
 			int[] lcNodesLength = {numberLinkCollectionNodes};
-			HidP_GetLinkCollectionNodes(lcNodes, lcNodesLength, ppd[0]);
+			HidP_GetLinkCollectionNodes(lcNodes, lcNodesLength, m_PreparsedData);
 			DataDump.dumpJnaStructures(out, lcNodes);
 		}
 		out.println("--------------------------------------------------------");
@@ -310,7 +418,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			if (numberButtonCapNodes > 0) {
 				HidLibrary.HIDP_BUTTON_CAPS[] buttonCapNodes = new HidLibrary.HIDP_BUTTON_CAPS[numberButtonCapNodes];
 				short[] buttonCapNodesLength = {numberButtonCapNodes};
-				HidP_GetButtonCaps(reportType, buttonCapNodes, buttonCapNodesLength, ppd[0]);
+				HidP_GetButtonCaps(reportType, buttonCapNodes, buttonCapNodesLength, m_PreparsedData);
 				DataDump.dumpJnaStructures(out, buttonCapNodes);
 			}
 			out.println("--------------------------------------------------------");
@@ -322,7 +430,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			if (numberValueCapNodes > 0) {
 				HidLibrary.HIDP_VALUE_CAPS[] valueCapNodes = new HidLibrary.HIDP_VALUE_CAPS[numberValueCapNodes];
 				short[] valueCapNodesLength = {numberValueCapNodes};
-				HidP_GetValueCaps(reportType, valueCapNodes, valueCapNodesLength, ppd[0]);
+				HidP_GetValueCaps(reportType, valueCapNodes, valueCapNodesLength, m_PreparsedData);
 				DataDump.dumpJnaStructures(out, valueCapNodes);
 			}
 			out.println("--------------------------------------------------------");

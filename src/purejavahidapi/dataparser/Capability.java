@@ -36,25 +36,30 @@ package purejavahidapi.dataparser;
 public abstract class Capability {
 	Type m_Type;
 	byte m_ReportId;
+	short m_LinkCollection;
 	int m_ReportBitOffset;
 	int m_ReportBitLength;
+	short m_ReportByteLengthWithPadding;
 	int m_DataIndexMin;
 	int m_DataIndexMax;
-	int m_UsagePage;
+	short m_UsagePage;
 	
 	protected Capability(
 		Type type,
 		byte reportId,
+		short linkCollection,
 		int reportBitOffset,
 		int reportBitLength,
 		int dataIndexMin,
 		int dataIndexMax,
-		int usagePage
+		short usagePage
 	) {
 		m_Type = type;
 		m_ReportId = reportId;
+		m_LinkCollection = linkCollection;
 		m_ReportBitOffset = reportBitOffset;
 		m_ReportBitLength = reportBitLength;
+		m_ReportByteLengthWithPadding = (short)((m_ReportBitLength / Byte.SIZE) + ((m_ReportBitLength % Byte.SIZE == 0) ? 0 : 1));
 		m_DataIndexMin = dataIndexMin;
 		m_DataIndexMax = dataIndexMax;
 		m_UsagePage = usagePage;
@@ -62,11 +67,13 @@ public abstract class Capability {
 	
 	public Type getType() { return m_Type; }
 	public int getReportId() { return  m_ReportId; }
-	public int getReportBitLength() { return m_ReportBitLength; }
+	public short getLinkCollection() { return m_LinkCollection; }
 	public int getReportBitOffset() { return m_ReportBitOffset; }
+	public int getReportBitLength() { return m_ReportBitLength; }
+	public short getReportByteLengthWithPadding() { return m_ReportByteLengthWithPadding; }
 	public int getDataIndexMin() { return m_DataIndexMin; }
 	public int getDataIndexMax() { return m_DataIndexMax; }
-	public int getUsagePage() { return m_UsagePage; }
+	public short getUsagePage() { return m_UsagePage; }
 	
 	public enum Type { INPUT, OUTPUT, FEATURE }
 	
@@ -77,14 +84,15 @@ public abstract class Capability {
 		public ButtonRange(
 			Type type,
 			byte reportId,
+			short linkCollection,
 			int reportBitOffset,
 			int dataIndexMin,
 			int dataIndexMax,
-			int usagePage,
+			short usagePage,
 			short usageMin,
 			short usageMax
 		) {
-			super(type, reportId, reportBitOffset, usageMax - usageMin + 1, dataIndexMin, dataIndexMax, usagePage);
+			super(type, reportId, linkCollection, reportBitOffset, usageMax - usageMin + 1, dataIndexMin, dataIndexMax, usagePage);
 			m_UsageMin = usageMin;
 			m_UsageMax = usageMax;
 		}
@@ -103,17 +111,18 @@ public abstract class Capability {
 		public Value(
 			Type type,
 			byte reportId,
+			short linkCollection,
 			int reportBitOffset,
 			int dataIndexMin,
 			int dataIndexMax,
-			int usagePage,
+			short usagePage,
 			short usage,
 			long logicalMin,
 			long logicalMax,
 			int bitSize,
 			int reportCount
 		) {
-			super(type, reportId, reportBitOffset, bitSize * reportCount, dataIndexMin, dataIndexMax, usagePage);
+			super(type, reportId, linkCollection, reportBitOffset, bitSize * reportCount, dataIndexMin, dataIndexMax, usagePage);
 			m_Usage = usage;
 			m_LogicalMin = logicalMin;
 			m_LogicalMax = logicalMax;

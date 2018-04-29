@@ -29,6 +29,9 @@
  */
 package purejavahidapi;
 
+import purejavahidapi.dataparser.Capability;
+import purejavahidapi.dataparser.ParsedReportDataItem;
+
 /**
  * Instances of HidDevice represent a single physical USB HID device that has
  * been opened for communication.
@@ -251,5 +254,24 @@ abstract public class HidDevice {
 	 * 
 	 */
 	abstract public void close();
-
+	
+	/**
+	 * On systems that support reading of report descriptors
+	 * (currently only Windows, as of v0.0.11), this method can
+	 * be used for parsing report data from the descriptors that
+	 * match the given report ID.
+	 *
+	 * If the calling system does not support reading of report
+	 * descriptors, then this method will return null.
+	 *
+	 * @param capabilityType the type of report to be parsed
+	 * @param reportID the report Id number if used or zero
+	 * @param reportData the report data
+	 * @param reportLength report length
+	 * @return an array of {@code ParsedReportDataItem} if reading
+	 *         of report descriptors is supported, or null otherwise.
+	 */
+	public ParsedReportDataItem[] parseReport(Capability.Type capabilityType, byte reportID, byte[] reportData, int reportLength) {
+		return null;
+	}
 }
