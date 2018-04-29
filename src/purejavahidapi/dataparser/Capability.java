@@ -66,7 +66,7 @@ public abstract class Capability {
 	}
 	
 	public Type getType() { return m_Type; }
-	public int getReportId() { return  m_ReportId; }
+	public byte getReportId() { return  m_ReportId; }
 	public short getLinkCollection() { return m_LinkCollection; }
 	public int getReportBitOffset() { return m_ReportBitOffset; }
 	public int getReportBitLength() { return m_ReportBitLength; }
