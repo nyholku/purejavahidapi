@@ -44,11 +44,18 @@ public class HidDataParser {
 	/**
 	 * On systems that support reading of report descriptors
 	 * (currently only Windows, as of v0.0.11), this method can
-	 * be used in implementations of this class for parsing report
-	 * data from the descriptors that match the given report ID.
+	 * be used for parsing report data from the descriptors that
+	 * match the given report ID.
 	 *
 	 * If the calling system does not support reading of report
 	 * descriptors, then this method will return null.
+	 *
+	 * @param source the HidDevice object
+	 * @param reportID the report Id number if used or zero
+	 * @param reportData the report data
+	 * @param reportLength report length
+	 * @return an array of {@code ParsedReportDataItem} if reading
+	 *         of report descriptors is supported, or null otherwise.
 	 */
 	public static ParsedReportDataItem[] getParsedReportData(
 		HidDevice source,
@@ -108,6 +115,11 @@ public class HidDataParser {
 	 * This method considers the least significant bit of a byte
 	 * to be the "first" bit in that byte. Conversely, the most
 	 * significant bit is treated as the "last" bit of a byte.
+	 *
+	 * @param buffer the buffer from which to extract data
+	 * @param bitOffset the offset in bits (NOT bytes) from which to start extraction
+	 * @param bitLength the length in bits (NOT bytes) to extract
+	 * @return the extracted data, shifted if necessary from the original buffer
 	 */
 	public static byte[] extractDataAtBitOffset(byte[] buffer, int bitOffset, int bitLength) {
 		int courseByteOffset = bitOffset / Byte.SIZE;
