@@ -47,6 +47,7 @@ import java.util.*;
 			m_DeviceId = deviceId;
 			m_VendorId = attrib.VendorID;
 			m_ProductId = attrib.ProductID;
+			m_ReleaseNumber = attrib.VersionNumber;
 
 			HIDP_CAPS caps = new HIDP_CAPS();
 
