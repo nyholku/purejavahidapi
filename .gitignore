@@ -1,2 +1,4 @@
 /target/
 /classes/
+/bin
+.settings

@@ -224,7 +224,7 @@ public class SetupApiLibrary {
 	final static int ANYSIZE_ARRAY = 1;
 
 	static public class SP_DEVICE_INTERFACE_DETAIL_DATA_A extends Structure {
-		public int cbSize = Pointer.SIZE == 8 ? 8 : 5; // Note 1
+		public int cbSize = Native.POINTER_SIZE == 8 ? 8 : 5; // Note 1
 		// Note 1, I believe this structure is packed in Windows API and as this field
 		// is initialized with sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA) it gets the size
 		// 5 in 32 bit process but 8 in 64 bit process...i think! Nasty little detail
