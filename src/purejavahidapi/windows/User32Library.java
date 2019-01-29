@@ -32,6 +32,14 @@ package purejavahidapi.windows;
 import java.util.Arrays;
 import java.util.List;
 
+import com.sun.jna.Callback;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
+import com.sun.jna.WString;
+import com.sun.jna.win32.StdCallLibrary;
+import com.sun.jna.win32.W32APIOptions;
+
 import purejavahidapi.windows.WinDef.ATOM;
 import purejavahidapi.windows.WinDef.HANDLE;
 import purejavahidapi.windows.WinDef.HBRUSH;
@@ -46,15 +54,6 @@ import purejavahidapi.windows.WinDef.LRESULT;
 import purejavahidapi.windows.WinDef.POINT;
 import purejavahidapi.windows.WinDef.PVOID;
 import purejavahidapi.windows.WinDef.WPARAM;
-
-import com.sun.jna.Callback;
-import com.sun.jna.IntegerType;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.WString;
-import com.sun.jna.win32.StdCallLibrary;
-import com.sun.jna.win32.W32APIOptions;
 
 @SuppressWarnings("serial")
 public class User32Library {

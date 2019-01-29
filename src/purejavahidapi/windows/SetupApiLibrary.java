@@ -121,15 +121,18 @@ package purejavahidapi.windows;
 import java.util.Arrays;
 import java.util.List;
 
-import purejavahidapi.windows.CfgmgrLibrary.CfgmgrInterface;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
+import com.sun.jna.win32.W32APIOptions;
+
 import purejavahidapi.windows.WinDef.HANDLE;
 import purejavahidapi.windows.WinDef.HWND;
 
-import com.sun.jna.*;
-import com.sun.jna.win32.W32APIOptions;
-
 public class SetupApiLibrary {
-	static SetupApiInterface INSTANCE = (SetupApiInterface) Native.loadLibrary("setupapi", SetupApiInterface.class, W32APIOptions.UNICODE_OPTIONS);
+	static SetupApiInterface INSTANCE = (SetupApiInterface) Native.loadLibrary("setupapi", SetupApiInterface.class,
+			W32APIOptions.UNICODE_OPTIONS);
 
 	public static final int DIGCF_PRESENT = 2;
 	public static final int DIGCF_ALLCLASSES = 4;
@@ -266,23 +269,30 @@ public class SetupApiLibrary {
 
 		HDEVINFO SetupDiGetClassDevs(GUID ClassGuid, String Enumerator, HWND hwndParent, int Flags);
 
-		boolean SetupDiEnumDeviceInterfaces(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData, GUID InterfaceClassGuid, int MemberIndex, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData);
+		boolean SetupDiEnumDeviceInterfaces(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData,
+				GUID InterfaceClassGuid, int MemberIndex, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData);
 
-		boolean SetupDiGetDeviceInterfaceDetail(HDEVINFO DeviceInfoSet, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData, SP_DEVICE_INTERFACE_DETAIL_DATA_A DeviceInterfaceDetailData, int DeviceInterfaceDetailDataSize, int[] RequiredSize, SP_DEVINFO_DATA DeviceInfoData);
+		boolean SetupDiGetDeviceInterfaceDetail(HDEVINFO DeviceInfoSet, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
+				SP_DEVICE_INTERFACE_DETAIL_DATA_A DeviceInterfaceDetailData, int DeviceInterfaceDetailDataSize,
+				int[] RequiredSize, SP_DEVINFO_DATA DeviceInfoData);
 
 		boolean SetupDiEnumDeviceInfo(HDEVINFO DeviceInfoSet, int MemberIndex, SP_DEVINFO_DATA DeviceInfoData);
 
-		boolean SetupDiGetDeviceRegistryProperty(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData, int Property, int[] PropertyRegDataType, char[] PropertyBuffer, int PropertyBufferSize, int[] RequiredSize);
+		boolean SetupDiGetDeviceRegistryProperty(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData, int Property,
+				int[] PropertyRegDataType, char[] PropertyBuffer, int PropertyBufferSize, int[] RequiredSize);
 
 		boolean SetupDiDestroyDeviceInfoList(HDEVINFO DeviceInfoSet);
 
-		boolean SetupDiGetDeviceInstanceId(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData, char[] DeviceInstanceId, int DeviceInstanceIdSize, int[] RequiredSize);
+		boolean SetupDiGetDeviceInstanceId(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData,
+				char[] DeviceInstanceId, int DeviceInstanceIdSize, int[] RequiredSize);
 
-		boolean SetupDiOpenDeviceInterface(HDEVINFO DeviceInfoSet, String DevicePath, int OpenFlags, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData);
+		boolean SetupDiOpenDeviceInterface(HDEVINFO DeviceInfoSet, String DevicePath, int OpenFlags,
+				SP_DEVICE_INTERFACE_DATA DeviceInterfaceData);
 
 		boolean SetupDiDeleteDeviceInterfaceData(HDEVINFO DeviceInfoSet, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData);
 
-		boolean SetupDiOpenDeviceInfo(HDEVINFO DeviceInfoSet, String DeviceInstanceId, HWND hwndParent, int OpenFlags, SP_DEVINFO_DATA DeviceInfoData);
+		boolean SetupDiOpenDeviceInfo(HDEVINFO DeviceInfoSet, String DeviceInstanceId, HWND hwndParent, int OpenFlags,
+				SP_DEVINFO_DATA DeviceInfoData);
 	}
 
 	public static HDEVINFO SetupDiCreateDeviceInfoList(GUID ClassGuid, HWND hwndParent) {
@@ -293,39 +303,53 @@ public class SetupApiLibrary {
 		return INSTANCE.SetupDiGetClassDevs(ClassGuid, Enumerator, hwndParent, Flags);
 	}
 
-	public static boolean SetupDiEnumDeviceInterfaces(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData, GUID InterfaceClassGuid, int MemberIndex, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData) {
-		return INSTANCE.SetupDiEnumDeviceInterfaces(DeviceInfoSet, DeviceInfoData, InterfaceClassGuid, MemberIndex, DeviceInterfaceData);
+	public static boolean SetupDiEnumDeviceInterfaces(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData,
+			GUID InterfaceClassGuid, int MemberIndex, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData) {
+		return INSTANCE.SetupDiEnumDeviceInterfaces(DeviceInfoSet, DeviceInfoData, InterfaceClassGuid, MemberIndex,
+				DeviceInterfaceData);
 	}
 
-	public static boolean SetupDiEnumDeviceInfo(HDEVINFO DeviceInfoSet, int MemberIndex, SP_DEVINFO_DATA DeviceInfoData) {
+	public static boolean SetupDiEnumDeviceInfo(HDEVINFO DeviceInfoSet, int MemberIndex,
+			SP_DEVINFO_DATA DeviceInfoData) {
 		return INSTANCE.SetupDiEnumDeviceInfo(DeviceInfoSet, MemberIndex, DeviceInfoData);
 	}
 
-	public static boolean SetupDiGetDeviceInterfaceDetail(HDEVINFO DeviceInfoSet, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData, SP_DEVICE_INTERFACE_DETAIL_DATA_A DeviceInterfaceDetailData, int DeviceInterfaceDetailDataSize, int[] RequiredSize, SP_DEVINFO_DATA DeviceInfoData) {
-		return INSTANCE.SetupDiGetDeviceInterfaceDetail(DeviceInfoSet, DeviceInterfaceData, DeviceInterfaceDetailData, DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
+	public static boolean SetupDiGetDeviceInterfaceDetail(HDEVINFO DeviceInfoSet,
+			SP_DEVICE_INTERFACE_DATA DeviceInterfaceData, SP_DEVICE_INTERFACE_DETAIL_DATA_A DeviceInterfaceDetailData,
+			int DeviceInterfaceDetailDataSize, int[] RequiredSize, SP_DEVINFO_DATA DeviceInfoData) {
+		return INSTANCE.SetupDiGetDeviceInterfaceDetail(DeviceInfoSet, DeviceInterfaceData, DeviceInterfaceDetailData,
+				DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
 	}
 
-	public static boolean SetupDiGetDeviceRegistryProperty(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData, int Property, int[] PropertyRegDataType, char[] PropertyBuffer, int PropertyBufferSize, int[] RequiredSize) {
-		return INSTANCE.SetupDiGetDeviceRegistryProperty(DeviceInfoSet, DeviceInfoData, Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize, RequiredSize);
+	public static boolean SetupDiGetDeviceRegistryProperty(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData,
+			int Property, int[] PropertyRegDataType, char[] PropertyBuffer, int PropertyBufferSize,
+			int[] RequiredSize) {
+		return INSTANCE.SetupDiGetDeviceRegistryProperty(DeviceInfoSet, DeviceInfoData, Property, PropertyRegDataType,
+				PropertyBuffer, PropertyBufferSize, RequiredSize);
 	}
 
 	static public boolean SetupDiDestroyDeviceInfoList(HDEVINFO DeviceInfoSet) {
 		return INSTANCE.SetupDiDestroyDeviceInfoList(DeviceInfoSet);
 	}
 
-	static public boolean SetupDiGetDeviceInstanceId(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData, char[] DeviceInstanceId, int DeviceInstanceIdSize, int[] RequiredSize) {
-		return INSTANCE.SetupDiGetDeviceInstanceId(DeviceInfoSet, DeviceInfoData, DeviceInstanceId, DeviceInstanceIdSize, RequiredSize);
+	static public boolean SetupDiGetDeviceInstanceId(HDEVINFO DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData,
+			char[] DeviceInstanceId, int DeviceInstanceIdSize, int[] RequiredSize) {
+		return INSTANCE.SetupDiGetDeviceInstanceId(DeviceInfoSet, DeviceInfoData, DeviceInstanceId,
+				DeviceInstanceIdSize, RequiredSize);
 	}
 
-	static public boolean SetupDiOpenDeviceInterface(HDEVINFO DeviceInfoSet, String DevicePath, int OpenFlags, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData) {
+	static public boolean SetupDiOpenDeviceInterface(HDEVINFO DeviceInfoSet, String DevicePath, int OpenFlags,
+			SP_DEVICE_INTERFACE_DATA DeviceInterfaceData) {
 		return INSTANCE.SetupDiOpenDeviceInterface(DeviceInfoSet, DevicePath, OpenFlags, DeviceInterfaceData);
 	}
 
-	static public boolean SetupDiDeleteDeviceInterfaceData(HDEVINFO DeviceInfoSet, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData) {
+	static public boolean SetupDiDeleteDeviceInterfaceData(HDEVINFO DeviceInfoSet,
+			SP_DEVICE_INTERFACE_DATA DeviceInterfaceData) {
 		return INSTANCE.SetupDiDeleteDeviceInterfaceData(DeviceInfoSet, DeviceInterfaceData);
 	}
 
-	static public boolean SetupDiOpenDeviceInfo(HDEVINFO DeviceInfoSet, String DeviceInstanceId, HWND hwndParent, int OpenFlags, SP_DEVINFO_DATA DeviceInfoData) {
+	static public boolean SetupDiOpenDeviceInfo(HDEVINFO DeviceInfoSet, String DeviceInstanceId, HWND hwndParent,
+			int OpenFlags, SP_DEVINFO_DATA DeviceInfoData) {
 		return INSTANCE.SetupDiOpenDeviceInfo(DeviceInfoSet, DeviceInstanceId, hwndParent, OpenFlags, DeviceInfoData);
 	}
 
