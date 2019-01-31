@@ -38,7 +38,6 @@ import static purejavahidapi.windows.HidLibrary.HidP_GetCaps;
 import static purejavahidapi.windows.Kernel32Library.CancelIo;
 import static purejavahidapi.windows.Kernel32Library.CancelIoEx;
 import static purejavahidapi.windows.Kernel32Library.CloseHandle;
-//ajout ac
 import static purejavahidapi.windows.Kernel32Library.CreateEvent;
 import static purejavahidapi.windows.Kernel32Library.DeviceIoControl;
 import static purejavahidapi.windows.Kernel32Library.ERROR_DEVICE_NOT_CONNECTED;
@@ -272,7 +271,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_SyncStart.waitAndSync();
 		while (!m_StopThread) {
 			m_InputReportBytesRead[0] = 0;
-			// System.out.println("ResetEvent...");
 			if (!ResetEvent(m_InputReportOverlapped.hEvent)) {
 				System.err.println("ResetEvent failed with GetLastError()==" + GetLastError());
 			}
@@ -283,34 +281,24 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			// the data is always
 			// preceded with the report number (even if not used in case of which it is
 			// zero)
-			// System.out.println("ReadFile...");
 			if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, m_InputReportBytesRead,
 					m_InputReportOverlapped)) {
-				// System.out.println("ReadFile -> err=" + GetLastError());
 				if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 					break; // early exit if the device disappears
 				if (GetLastError() != ERROR_IO_PENDING) {
 					CancelIo(m_Handle);
 					System.err.println("ReadFile failed with GetLastError()==" + GetLastError());
 				}
-				// System.out.println("ReadFile -> IO pending ");
-				// System.out.println("GetOverlappedResult wait");
+
 				if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
-					// System.out.println("GetOverlappedResult -> err=" + GetLastError());
-					// if device disconnected or connection closed, shutdown
 					if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 						break; // early exit if the device disappears
 					if (m_StopThread && GetLastError() == ERROR_OPERATION_ABORTED)
 						break;// on close
 					System.err.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
-				} else {
-					// System.out.println("GetOverlappedResult -> byteread=" +
-					// m_InputReportBytesRead[0]);
 				}
-
-			} else {
-				// System.out.println("ReadFile -> byteread=" + m_InputReportBytesRead[0]);
 			}
+
 			byte lastReportID = -1;
 			byte[] lastDataBuff = null;
 			while (true) {
@@ -318,18 +306,12 @@ public class HidDevice extends purejavahidapi.HidDevice {
 					byte reportID = m_InputReportMemory.getByte(0);
 					int len = m_InputReportBytesRead[0] - 1;
 					m_InputReportMemory.read(1, m_InputReportBytes, 0, len);
-					// System.out.println("buffer: len=" + len + " buf=" +
-					// javax.xml.bind.DatatypeConverter.printHexBinary(m_InputReportBytes));
 					// Need to copy because the buffer sometime change behind, and we keep a copy
 					byte[] dataBuff = Arrays.copyOf(m_InputReportBytes, len);
 					if (lastDataBuff != null && Arrays.equals(dataBuff, lastDataBuff) && lastReportID == reportID) {
 						// report is same, go back to ReadFile
-						// System.out.println("buffer: no change len=" + len + " buf=" +
-						// javax.xml.bind.DatatypeConverter.printHexBinary(dataBuff));
 						break;
 					} else {
-						// System.out.println("do listener len=" + len + " buf="+
-						// javax.xml.bind.DatatypeConverter.printHexBinary(dataBuff));
 						Instant start = Instant.now();
 						if (m_InputReportListener != null) {
 							m_InputReportListener.onInputReport(this, reportID, dataBuff, len);
@@ -337,11 +319,11 @@ public class HidDevice extends purejavahidapi.HidDevice {
 						if (HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS > 0) {
 							long remains = Duration
 									.between(Instant.now(), start.plusMillis(HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS))
-									.toMillis() ;
-							if(remains<=0) 
-								remains=1;
+									.toMillis();
+							if (remains <= 0)
+								remains = 1;
 							try {
-								// tested with Ledget nano S
+								// tested with Ledger nano S
 								// without this delay, the second HID InputReport is missed
 								// with delay>1ms it often works one time, but not 2
 								// with delay <11ms when looping it often miss the 2nd frame over 3
@@ -356,28 +338,22 @@ public class HidDevice extends purejavahidapi.HidDevice {
 					}
 				} else {
 					// report is empty, go back to ReadFile
-					// System.out.println("buffer: empty");
 					break;
 				}
 				// Strangely on a Ledger Nano S, sometime the Report changes just after
 				// GetOverlappedResult
 				// the second GetOverlappedResult will give a new result
 				// but afterward it will always give the same result, and will do that endlessly
-				// System.out.println("retry GetOverlappedResult nowait");
 				m_InputReportBytesRead[0] = 0;
 				if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true)) {
-					// System.out.println("retry GetOverlappedResult err=" + GetLastError());
-					// abnormal error, ignoing, go back to ReadFile
+					// abnormal error, ignoring, go back to ReadFile
 					break;
-				} else {
-					// report is changed, so loop again to send it to the listener, and try to see
-					// if a new one appears
-					// System.out.println("late GetOverlappedResult succeed lasterror=" +
-					// GetLastError() + " byteread=" + m_InputReportBytesRead[0]);
 				}
+				// report is changed, so loop again to send it to the listener,
+				// and try to see if a new one appears
 
 			}
-			// in case the second... GetOverlappedResult ave failed because of disconnection
+			// in case the second... GetOverlappedResult failed because of disconnection
 			// or close, shutdown...
 			if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 				break; // early exit if the device disappears
