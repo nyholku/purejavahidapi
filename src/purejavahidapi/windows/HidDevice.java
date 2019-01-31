@@ -31,7 +31,6 @@ package purejavahidapi.windows;
 
 import static purejavahidapi.windows.HidLibrary.HidD_FreePreparsedData;
 import static purejavahidapi.windows.HidLibrary.HidD_GetAttributes;
-import static purejavahidapi.windows.HidLibrary.HidD_GetFeature;
 import static purejavahidapi.windows.HidLibrary.HidD_GetPreparsedData;
 import static purejavahidapi.windows.HidLibrary.HidD_SetFeature;
 import static purejavahidapi.windows.HidLibrary.HidD_SetOutputReport;
@@ -91,7 +90,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private boolean m_ForceControlOutput;
 
 	/* package */ HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
-		HANDLE handle = backend.openDeviceHandle(deviceInfo.getPath(), false);
+		HANDLE handle = WindowsBackend.openDeviceHandle(deviceInfo.getPath(), false);
 
 		if (handle == INVALID_HANDLE_VALUE)
 			return;
@@ -249,35 +248,24 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	synchronized public int getFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		if (false) { // can't use this as it will not return the size of the report
-			if (!HidD_GetFeature(m_Handle, data, length)) {
-				// register_error(dev, "HidD_SetFeature");
-				System.out.println(GetLastError());
-				return -1;
-			}
-		} else {
-			int[] bytes = {
-					0
-			};
+		int[] bytes = {
+				0
+		};
 
-			OVERLAPPED ol = new OVERLAPPED();
-			Pointer buffer = new Memory(data.length);
-			if (!DeviceIoControl(m_Handle, IOCTL_HID_GET_FEATURE, buffer, length, buffer, length, bytes, ol)) {
-				// System.out.println(GetLastError());
-				if (GetLastError() != ERROR_IO_PENDING)
-					return -1;
-			}
-
-			if (!GetOverlappedResult(m_Handle, ol, bytes, true/* wait */))
+		OVERLAPPED ol = new OVERLAPPED();
+		Pointer buffer = new Memory(data.length);
+		if (!DeviceIoControl(m_Handle, IOCTL_HID_GET_FEATURE, buffer, length, buffer, length, bytes, ol)) {
+			// System.out.println(GetLastError());
+			if (GetLastError() != ERROR_IO_PENDING)
 				return -1;
-			int n = bytes[0] + 1;
-			byte[] t = buffer.getByteArray(0, n);
-			System.arraycopy(t, 0, data, 0, n);
-			return n;
 		}
-		return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go
-					// figure
 
+		if (!GetOverlappedResult(m_Handle, ol, bytes, true/* wait */))
+			return -1;
+		int n = bytes[0] + 1;
+		byte[] t = buffer.getByteArray(0, n);
+		System.arraycopy(t, 0, data, 0, n);
+		return n;
 	}
 
 	private void runReadOnBackground() {
