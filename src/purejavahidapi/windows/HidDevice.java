@@ -69,6 +69,7 @@ import purejavahidapi.windows.WinDef.OVERLAPPED;
 
 public class HidDevice extends purejavahidapi.HidDevice {
 	protected static final long HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS = 20L;
+	
 	private WindowsBackend m_Backend;
 	private HANDLE m_Handle;
 	private int m_OutputReportLength;
@@ -294,72 +295,80 @@ public class HidDevice extends purejavahidapi.HidDevice {
 					if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 						break; // early exit if the device disappears
 					if (m_StopThread && GetLastError() == ERROR_OPERATION_ABORTED)
-						break;// on close
+						break; // on close
 					System.err.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
 				}
 			}
 
-			byte lastReportID = -1;
-			byte[] lastDataBuff = null;
-			while (true) {
-				if (m_InputReportBytesRead[0] > 0) {
-					byte reportID = m_InputReportMemory.getByte(0);
-					int len = m_InputReportBytesRead[0] - 1;
-					m_InputReportMemory.read(1, m_InputReportBytes, 0, len);
-					// Need to copy because the buffer sometime change behind, and we keep a copy
-					byte[] dataBuff = Arrays.copyOf(m_InputReportBytes, len);
-					if (lastDataBuff != null && Arrays.equals(dataBuff, lastDataBuff) && lastReportID == reportID) {
-						// report is same, go back to ReadFile
-						break;
-					} else {
-						Instant start = Instant.now();
-						if (m_InputReportListener != null) {
-							m_InputReportListener.onInputReport(this, reportID, dataBuff, len);
-						}
-						if (HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS > 0) {
-							long remains = Duration
-									.between(Instant.now(), start.plusMillis(HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS))
-									.toMillis();
-							if (remains <= 0)
-								remains = 1;
-							try {
-								// tested with Ledger nano S
-								// without this delay, the second HID InputReport is missed
-								// with delay>1ms it often works one time, but not 2
-								// with delay <11ms when looping it often miss the 2nd frame over 3
-								// with 20ms it seems OK.
-								Thread.sleep(remains);
-							} catch (InterruptedException e) {
-								Thread.currentThread().interrupt();
-							}
-						}
-						lastDataBuff = dataBuff;
-						lastReportID = reportID;
-					}
-				} else {
-					// report is empty, go back to ReadFile
-					break;
-				}
-				// Strangely on a Ledger Nano S, sometime the Report changes just after
-				// GetOverlappedResult
-				// the second GetOverlappedResult will give a new result
-				// but afterward it will always give the same result, and will do that endlessly
-				m_InputReportBytesRead[0] = 0;
-				if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true)) {
-					// abnormal error, ignoring, go back to ReadFile
-					break;
-				}
-				// report is changed, so loop again to send it to the listener,
-				// and try to see if a new one appears
+			processInputReport();
 
-			}
 			// in case the second... GetOverlappedResult failed because of disconnection
 			// or close, shutdown...
 			if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 				break; // early exit if the device disappears
 			if (m_StopThread && GetLastError() == ERROR_OPERATION_ABORTED)
-				break;// on close
+				break; // on close
 		}
 		m_SyncShutdown.waitAndSync();
+	}
+
+	private void processInputReport() {
+		byte lastReportID = -1;
+		byte[] lastDataBuff = null;
+		while (true) {
+			if (m_InputReportBytesRead[0] > 0) {
+				byte reportID = m_InputReportMemory.getByte(0);
+				int len = m_InputReportBytesRead[0] - 1;
+				m_InputReportMemory.read(1, m_InputReportBytes, 0, len);
+				// Need to copy because the buffer sometime change behind, and we keep a copy
+				byte[] dataBuff = Arrays.copyOf(m_InputReportBytes, len);
+				if (lastDataBuff != null && Arrays.equals(dataBuff, lastDataBuff) && lastReportID == reportID) {
+					// report is same, go back to ReadFile
+					break;
+				} else {
+					Instant start = Instant.now();
+					if (m_InputReportListener != null) {
+						m_InputReportListener.onInputReport(this, reportID, dataBuff, len);
+					}
+					delayAfterListener(start);
+					lastDataBuff = dataBuff;
+					lastReportID = reportID;
+				}
+			} else {
+				// report is empty, go back to ReadFile
+				break;
+			}
+			// Strangely on a Ledger Nano S, sometime the Report changes just after
+			// GetOverlappedResult
+			// the second GetOverlappedResult will give a new result
+			// but afterward it will always give the same result, and will do that endlessly
+			m_InputReportBytesRead[0] = 0;
+			if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true)) {
+				// abnormal error, ignoring, go back to ReadFile
+				break;
+			}
+			// report is changed, so loop again to send it to the listener,
+			// and try to see if a new one appears
+		}
+	}
+
+	private void delayAfterListener(Instant start) {
+		if (HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS > 0) {
+			long remains = Duration
+					.between(Instant.now(), start.plusMillis(HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS))
+					.toMillis();
+			if (remains <= 0)
+				remains = 1;
+			try {
+				// tested with Ledger nano S
+				// without this delay, the second HID InputReport is missed
+				// with delay>1ms it often works one time, but not 2
+				// with delay <11ms when looping it often miss the 2nd frame over 3
+				// with 20ms it seems OK.
+				Thread.sleep(remains);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
 	}
 }
