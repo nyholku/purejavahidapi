@@ -1,1 +1,1 @@
-mvn versions:display-plugin-updates
+mvn versions:display-plugin-updates versions:display-dependency-updates
