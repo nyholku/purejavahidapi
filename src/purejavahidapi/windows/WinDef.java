@@ -359,7 +359,7 @@ public class WinDef {
 
 		public OVERLAPPED() {
 
-			setAutoSynch(false);
+			setAutoSynch(true);
 
 		}
 
