@@ -35,23 +35,13 @@ import static purejavahidapi.windows.HidLibrary.HidD_GetPreparsedData;
 import static purejavahidapi.windows.HidLibrary.HidD_SetFeature;
 import static purejavahidapi.windows.HidLibrary.HidD_SetOutputReport;
 import static purejavahidapi.windows.HidLibrary.HidP_GetCaps;
-import static purejavahidapi.windows.Kernel32Library.CancelIo;
-import static purejavahidapi.windows.Kernel32Library.CancelIoEx;
-import static purejavahidapi.windows.Kernel32Library.CloseHandle;
-import static purejavahidapi.windows.Kernel32Library.CreateEvent;
-import static purejavahidapi.windows.Kernel32Library.DeviceIoControl;
-import static purejavahidapi.windows.Kernel32Library.ERROR_DEVICE_NOT_CONNECTED;
-import static purejavahidapi.windows.Kernel32Library.ERROR_IO_PENDING;
-import static purejavahidapi.windows.Kernel32Library.ERROR_OPERATION_ABORTED;
-import static purejavahidapi.windows.Kernel32Library.GetLastError;
-import static purejavahidapi.windows.Kernel32Library.GetOverlappedResult;
-import static purejavahidapi.windows.Kernel32Library.IOCTL_HID_GET_FEATURE;
-import static purejavahidapi.windows.Kernel32Library.ReadFile;
-import static purejavahidapi.windows.Kernel32Library.ResetEvent;
-import static purejavahidapi.windows.Kernel32Library.WriteFile;
+import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
 import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -66,6 +56,7 @@ import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.HidLibrary.HIDP_PREPARSED_DATA;
 import purejavahidapi.windows.WinDef.HANDLE;
 import purejavahidapi.windows.WinDef.OVERLAPPED;
+
 
 public class HidDevice extends purejavahidapi.HidDevice {
 	protected static final long HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS = 20L;
@@ -180,7 +171,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		if (m_OutputReportLength == 0)
-			throw new IllegalArgumentException("this device supportst no output reports");
+			throw new IllegalArgumentException("this device supports no output reports");
 		// In Windows writeFile() to HID device data has to be preceded with the report
 		// number, regardless
 		m_OutputReportMemory.write(0, new byte[] {
@@ -189,6 +180,13 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_OutputReportMemory.write(1, data, 0, length);
 
 		if (!m_ForceControlOutput) {
+			// bManualReset parameter has to be set to true to work with WaitForSingleObject
+			m_OutputReportOverlapped.hEvent = CreateEvent(null, true, false, null);
+			m_OutputReportOverlapped.Internal = null;
+			m_OutputReportOverlapped.InternalHigh = null;
+			m_OutputReportOverlapped.Offset = 0;
+			m_OutputReportOverlapped.OffsetHigh = 0;
+
 			// In windows always attempt to write as many bytes as there are in the longest
 			// report plus one for the report number (even if zero ie not used)
 			if (!WriteFile(m_Handle, m_OutputReportMemory, m_OutputReportLength, null, m_OutputReportOverlapped)) {
@@ -199,12 +197,21 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				}
 			}
 
+			Log("setOutputReport1");
+			if (WAIT_OBJECT_0 != WaitForSingleObject(m_OutputReportOverlapped.hEvent, 1000)) {
+				Log("setOutputReport failed 1");
+				return -1;
+			}
+
+			Log("setOutputReport2");
 			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, true/* wait */)) {
 				// The Write operation failed.
 				// register_error(dev, "WriteFile");
-				return 0;
+				Log("setOutputReport failed 2");
+				return -1;
 			}
 
+			Log("setOutputReport3");
 			return m_OutputReportBytesWritten[0] - 1;
 		} else {
 			if (!HidD_SetOutputReport(m_Handle, m_OutputReportMemory.getByteArray(0, length + 1), length + 1)) {
@@ -369,6 +376,16 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt();
 			}
+		}
+	}
+
+	private void Log(String sMessage) {
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Temp\\bmx.txt", true));
+			writer.write(sMessage + "\n");
+			writer.close();
+		} catch (Exception e) {
+
 		}
 	}
 }
