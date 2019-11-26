@@ -124,6 +124,9 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		}
 
 		m_ForceControlOutput = System.getProperty("purejavahidapi.forceControlOutput") != null;
+
+		// bManualReset parameter has to be set to true to work with WaitForSingleObject
+		m_OutputReportOverlapped.hEvent = CreateEvent(null, true, false, null);
 	}
 
 	@Override
@@ -137,6 +140,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			m_Thread.interrupt();
 			m_SyncShutdown.waitAndSync();
 		}
+		CloseHandle(m_OutputReportOverlapped.hEvent);
 		CloseHandle(m_Handle);
 		m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
 		m_Open = false;
@@ -156,8 +160,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_OutputReportMemory.write(1, data, 0, length);
 
 		if (!m_ForceControlOutput) {
-			// bManualReset parameter has to be set to true to work with WaitForSingleObject
-			m_OutputReportOverlapped.hEvent = CreateEvent(null, true, false, null);
+			ResetEvent(m_OutputReportOverlapped.hEvent);
 			m_OutputReportOverlapped.Internal = null;
 			m_OutputReportOverlapped.InternalHigh = null;
 			m_OutputReportOverlapped.Offset = 0;
@@ -183,6 +186,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, true/* wait */)) {
 				// The Write operation failed.
 				// register_error(dev, "WriteFile");
+				Log(Integer.toHexString(GetLastError()));
 				Log("setOutputReport failed 2");
 				return -1;
 			}
