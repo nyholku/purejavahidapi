@@ -186,7 +186,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			m_OutputReportOverlapped.read();
 
 			//Log("setOutputReport2");
-			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, false/* wait */)) {
+			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, false/* don't need to wait */)) {
 				// The Write operation failed.
 				// register_error(dev, "WriteFile");
 				Log(Integer.toHexString(GetLastError()));
@@ -268,6 +268,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		Memory readBuffer = new Memory(m_InputReportLength);
 
 		while (!m_StopThread) {
+			ResetEvent(overlapped.hEvent);
 			numBytesRead[0] = 0;
 			overlapped.Internal = null;
 			overlapped.InternalHigh = null;
@@ -287,7 +288,15 @@ public class HidDevice extends purejavahidapi.HidDevice {
 					System.err.println("ReadFile failed with GetLastError()==" + GetLastError());
 				}
 
-				if (!GetOverlappedResult(m_Handle, overlapped, numBytesRead, true/* wait */)) {
+				if (WAIT_OBJECT_0 != WaitForSingleObject(overlapped.hEvent, INFINITE)) {
+					Log("runReadOnBackground failed 1");
+					System.err.println("WaitForSingleObject failed with GetLastError()==" + GetLastError());
+				}
+
+				// Update structure from native code
+				overlapped.read();
+
+				if (!GetOverlappedResult(m_Handle, overlapped, numBytesRead, false/* don't need to wait */)) {
 					if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 						break; // early exit if the device disappears
 					if (m_StopThread && GetLastError() == ERROR_OPERATION_ABORTED)
