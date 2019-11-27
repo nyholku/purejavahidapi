@@ -182,8 +182,11 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				return -1;
 			}
 
+			// Update structure from native code
+			m_OutputReportOverlapped.read();
+
 			//Log("setOutputReport2");
-			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, true/* wait */)) {
+			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, false/* wait */)) {
 				// The Write operation failed.
 				// register_error(dev, "WriteFile");
 				Log(Integer.toHexString(GetLastError()));
