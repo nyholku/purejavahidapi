@@ -2,28 +2,28 @@
  * Copyright (c) 2014, Kustaa Nyholm / SpareTimeLabs
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
- * Redistributions of source code must retain the above copyright notice, this list 
+ * Redistributions of source code must retain the above copyright notice, this list
  * of conditions and the following disclaimer.
- * 
- * Redistributions in binary form must reproduce the above copyright notice, this 
+ *
+ * Redistributions in binary form must reproduce the above copyright notice, this
  * list of conditions and the following disclaimer in the documentation and/or other
  * materials provided with the distribution.
- *  
- * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its 
- * contributors may be used to endorse or promote products derived from this software 
+ *
+ * Neither the name of the Kustaa Nyholm or SpareTimeLabs nor the names of its
+ * contributors may be used to endorse or promote products derived from this software
  * without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
- * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
- * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
@@ -35,26 +35,9 @@ import static purejavahidapi.windows.HidLibrary.HidD_GetPreparsedData;
 import static purejavahidapi.windows.HidLibrary.HidD_SetFeature;
 import static purejavahidapi.windows.HidLibrary.HidD_SetOutputReport;
 import static purejavahidapi.windows.HidLibrary.HidP_GetCaps;
-import static purejavahidapi.windows.Kernel32Library.CancelIo;
-import static purejavahidapi.windows.Kernel32Library.CancelIoEx;
-import static purejavahidapi.windows.Kernel32Library.CloseHandle;
-import static purejavahidapi.windows.Kernel32Library.CreateEvent;
-import static purejavahidapi.windows.Kernel32Library.DeviceIoControl;
-import static purejavahidapi.windows.Kernel32Library.ERROR_DEVICE_NOT_CONNECTED;
-import static purejavahidapi.windows.Kernel32Library.ERROR_IO_PENDING;
-import static purejavahidapi.windows.Kernel32Library.ERROR_OPERATION_ABORTED;
-import static purejavahidapi.windows.Kernel32Library.GetLastError;
-import static purejavahidapi.windows.Kernel32Library.GetOverlappedResult;
-import static purejavahidapi.windows.Kernel32Library.IOCTL_HID_GET_FEATURE;
-import static purejavahidapi.windows.Kernel32Library.ReadFile;
-import static purejavahidapi.windows.Kernel32Library.ResetEvent;
-import static purejavahidapi.windows.Kernel32Library.WriteFile;
+import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
 import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Arrays;
 
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
@@ -67,9 +50,10 @@ import purejavahidapi.windows.HidLibrary.HIDP_PREPARSED_DATA;
 import purejavahidapi.windows.WinDef.HANDLE;
 import purejavahidapi.windows.WinDef.OVERLAPPED;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+
 public class HidDevice extends purejavahidapi.HidDevice {
-	protected static final long HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS = 20L;
-	
 	private WindowsBackend m_Backend;
 	private HANDLE m_Handle;
 	private int m_OutputReportLength;
@@ -77,12 +61,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private OVERLAPPED m_OutputReportOverlapped;
 	private int[] m_OutputReportBytesWritten;
 	private int m_InputReportLength;
-	private OVERLAPPED m_InputReportOverlapped = new OVERLAPPED();
-	private Memory m_InputReportMemory;
-	private byte[] m_InputReportBytes;
-	private int[] m_InputReportBytesRead = {
-			0
-	};
 	private Thread m_Thread;
 	private SyncPoint m_SyncStart;
 	private SyncPoint m_SyncShutdown;
@@ -123,17 +101,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		};
 
 		m_InputReportLength = caps.InputReportByteLength;
-		m_InputReportOverlapped = new OVERLAPPED();
-		// auto event for overlapped
-		m_InputReportOverlapped.hEvent = CreateEvent(null, false, false, null);
-		if (m_InputReportLength > 0) {
-			m_InputReportMemory = new Memory(m_InputReportLength);
-			m_InputReportBytes = new byte[m_InputReportLength];
-		}
-		m_InputReportBytesRead = new int[] {
-				0
-		};
-
 		HidD_FreePreparsedData(ppd[0]);
 
 		m_SyncStart = new SyncPoint(2);
@@ -157,6 +124,9 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		}
 
 		m_ForceControlOutput = System.getProperty("purejavahidapi.forceControlOutput") != null;
+
+		// bManualReset parameter has to be set to true to work with WaitForSingleObject
+		m_OutputReportOverlapped.hEvent = CreateEvent(null, true, false, null);
 	}
 
 	@Override
@@ -170,6 +140,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			m_Thread.interrupt();
 			m_SyncShutdown.waitAndSync();
 		}
+		CloseHandle(m_OutputReportOverlapped.hEvent);
 		CloseHandle(m_Handle);
 		m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
 		m_Open = false;
@@ -180,7 +151,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		if (m_OutputReportLength == 0)
-			throw new IllegalArgumentException("this device supportst no output reports");
+			throw new IllegalArgumentException("this device supports no output reports");
 		// In Windows writeFile() to HID device data has to be preceded with the report
 		// number, regardless
 		m_OutputReportMemory.write(0, new byte[] {
@@ -189,6 +160,12 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_OutputReportMemory.write(1, data, 0, length);
 
 		if (!m_ForceControlOutput) {
+			ResetEvent(m_OutputReportOverlapped.hEvent);
+			m_OutputReportOverlapped.Internal = null;
+			m_OutputReportOverlapped.InternalHigh = null;
+			m_OutputReportOverlapped.Offset = 0;
+			m_OutputReportOverlapped.OffsetHigh = 0;
+
 			// In windows always attempt to write as many bytes as there are in the longest
 			// report plus one for the report number (even if zero ie not used)
 			if (!WriteFile(m_Handle, m_OutputReportMemory, m_OutputReportLength, null, m_OutputReportOverlapped)) {
@@ -199,10 +176,17 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				}
 			}
 
-			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, true/* wait */)) {
+			if (WAIT_OBJECT_0 != WaitForSingleObject(m_OutputReportOverlapped.hEvent, 1000)) {
+				return -1;
+			}
+
+			// Update structure from native code
+			m_OutputReportOverlapped.read();
+
+			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, false/* don't need to wait */)) {
 				// The Write operation failed.
 				// register_error(dev, "WriteFile");
-				return 0;
+				return -1;
 			}
 
 			return m_OutputReportBytesWritten[0] - 1;
@@ -216,6 +200,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			return length;
 		}
 	}
+
 
 	@Override
 	synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
@@ -270,20 +255,26 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 	private void runReadOnBackground() {
 		m_SyncStart.waitAndSync();
-		while (!m_StopThread) {
-			m_InputReportBytesRead[0] = 0;
-			if (!ResetEvent(m_InputReportOverlapped.hEvent)) {
-				System.err.println("ResetEvent failed with GetLastError()==" + GetLastError());
-			}
 
-			// In Windows ReadFile() from a HID device Windows expects us to attempt to read
-			// as much bytes as there are
-			// in the longest report plus one for the report number (even if not used) and
-			// the data is always
-			// preceded with the report number (even if not used in case of which it is
-			// zero)
-			if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, m_InputReportBytesRead,
-					m_InputReportOverlapped)) {
+		int[] numBytesRead = { 0 };
+		OVERLAPPED overlapped = new OVERLAPPED();
+		overlapped.hEvent = CreateEvent(null, true, true, null);
+		Memory readBuffer = new Memory(m_InputReportLength);
+
+		while (!m_StopThread) {
+			ResetEvent(overlapped.hEvent);
+			numBytesRead[0] = 0;
+			overlapped.Internal = null;
+			overlapped.InternalHigh = null;
+			overlapped.Offset = 0;
+			overlapped.OffsetHigh = 0;
+
+			// In Windows ReadFile() from a HID device Windows expects us to
+			// attempt to read as much many as there are in the longest report
+			// plus one for the report number (even if not used) and the data
+			// is always preceded with the report number (even if not used in
+			// case of which it is zero)
+			if (!ReadFile(m_Handle, readBuffer, m_InputReportLength, numBytesRead, overlapped)) {
 				if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 					break; // early exit if the device disappears
 				if (GetLastError() != ERROR_IO_PENDING) {
@@ -291,7 +282,14 @@ public class HidDevice extends purejavahidapi.HidDevice {
 					System.err.println("ReadFile failed with GetLastError()==" + GetLastError());
 				}
 
-				if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true/* wait */)) {
+				if (WAIT_OBJECT_0 != WaitForSingleObject(overlapped.hEvent, INFINITE)) {
+					System.err.println("WaitForSingleObject failed with GetLastError()==" + GetLastError());
+				}
+
+				// Update structure from native code
+				overlapped.read();
+
+				if (!GetOverlappedResult(m_Handle, overlapped, numBytesRead, false/* don't need to wait */)) {
 					if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 						break; // early exit if the device disappears
 					if (m_StopThread && GetLastError() == ERROR_OPERATION_ABORTED)
@@ -300,75 +298,34 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				}
 			}
 
-			processInputReport();
-
-			// in case the second... GetOverlappedResult failed because of disconnection
-			// or close, shutdown...
-			if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
-				break; // early exit if the device disappears
-			if (m_StopThread && GetLastError() == ERROR_OPERATION_ABORTED)
-				break; // on close
+			processInputReport(readBuffer, numBytesRead[0]);
 		}
+
+		CloseHandle(overlapped.hEvent);
 		m_SyncShutdown.waitAndSync();
 	}
 
-	private void processInputReport() {
-		byte lastReportID = -1;
-		byte[] lastDataBuff = null;
-		while (true) {
-			if (m_InputReportBytesRead[0] > 0) {
-				byte reportID = m_InputReportMemory.getByte(0);
-				int len = m_InputReportBytesRead[0] - 1;
-				m_InputReportMemory.read(1, m_InputReportBytes, 0, len);
-				// Need to copy because the buffer sometime change behind, and we keep a copy
-				byte[] dataBuff = Arrays.copyOf(m_InputReportBytes, len);
-				if (lastDataBuff != null && Arrays.equals(dataBuff, lastDataBuff) && lastReportID == reportID) {
-					// report is same, go back to ReadFile
-					break;
-				} else {
-					Instant start = Instant.now();
-					if (m_InputReportListener != null) {
-						m_InputReportListener.onInputReport(this, reportID, dataBuff, len);
-					}
-					delayAfterListener(start);
-					lastDataBuff = dataBuff;
-					lastReportID = reportID;
-				}
-			} else {
-				// report is empty, go back to ReadFile
-				break;
+	private void processInputReport(Memory readBuffer, int numBytesRead) {
+		if (numBytesRead > 0) {
+			byte reportID = readBuffer.getByte(0);
+			int len = numBytesRead - 1;
+			byte[] inputReport = new byte[len];
+			readBuffer.read(1, inputReport, 0, len);
+			if (m_InputReportListener != null) {
+				m_InputReportListener.onInputReport(this, reportID, inputReport, len);
 			}
-			// Strangely on a Ledger Nano S, sometime the Report changes just after
-			// GetOverlappedResult
-			// the second GetOverlappedResult will give a new result
-			// but afterward it will always give the same result, and will do that endlessly
-			m_InputReportBytesRead[0] = 0;
-			if (!GetOverlappedResult(m_Handle, m_InputReportOverlapped, m_InputReportBytesRead, true)) {
-				// abnormal error, ignoring, go back to ReadFile
-				break;
-			}
-			// report is changed, so loop again to send it to the listener,
-			// and try to see if a new one appears
 		}
 	}
 
-	private void delayAfterListener(Instant start) {
-		if (HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS > 0) {
-			long remains = Duration
-					.between(Instant.now(), start.plusMillis(HID_INPUTREPORT_GETOVERLAPPED_DELAY_MS))
-					.toMillis();
-			if (remains <= 0)
-				remains = 1;
-			try {
-				// tested with Ledger nano S
-				// without this delay, the second HID InputReport is missed
-				// with delay>1ms it often works one time, but not 2
-				// with delay <11ms when looping it often miss the 2nd frame over 3
-				// with 20ms it seems OK.
-				Thread.sleep(remains);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
+	private void Log(String sMessage) {
+		try {
+			String fileName = "C:\\Temp\\bmx.txt";
+			BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true));
+			writer.write(sMessage + "\n");
+			writer.close();
+		} catch (Exception e) {
+
 		}
 	}
+
 }
