@@ -176,25 +176,19 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				}
 			}
 
-			//Log("setOutputReport1");
 			if (WAIT_OBJECT_0 != WaitForSingleObject(m_OutputReportOverlapped.hEvent, 1000)) {
-				Log("setOutputReport failed 1");
 				return -1;
 			}
 
 			// Update structure from native code
 			m_OutputReportOverlapped.read();
 
-			//Log("setOutputReport2");
 			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, false/* don't need to wait */)) {
 				// The Write operation failed.
 				// register_error(dev, "WriteFile");
-				Log(Integer.toHexString(GetLastError()));
-				Log("setOutputReport failed 2");
 				return -1;
 			}
 
-			//Log("setOutputReport3");
 			return m_OutputReportBytesWritten[0] - 1;
 		} else {
 			if (!HidD_SetOutputReport(m_Handle, m_OutputReportMemory.getByteArray(0, length + 1), length + 1)) {
@@ -289,7 +283,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				}
 
 				if (WAIT_OBJECT_0 != WaitForSingleObject(overlapped.hEvent, INFINITE)) {
-					Log("runReadOnBackground failed 1");
 					System.err.println("WaitForSingleObject failed with GetLastError()==" + GetLastError());
 				}
 
@@ -326,7 +319,8 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 	private void Log(String sMessage) {
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Temp\\bmx.txt", true));
+			String fileName = "C:\\Temp\\bmx.txt";
+			BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true));
 			writer.write(sMessage + "\n");
 			writer.close();
 		} catch (Exception e) {
