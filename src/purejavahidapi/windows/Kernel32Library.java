@@ -29,15 +29,15 @@
  */
 package purejavahidapi.windows;
 
-import purejavahidapi.windows.WinDef.HANDLE;
-import purejavahidapi.windows.WinDef.HMODULE;
-import purejavahidapi.windows.WinDef.OVERLAPPED;
-import purejavahidapi.windows.WinDef.SECURITY_ATTRIBUTES;
-
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
+
+import purejavahidapi.windows.WinDef.HANDLE;
+import purejavahidapi.windows.WinDef.HMODULE;
+import purejavahidapi.windows.WinDef.OVERLAPPED;
+import purejavahidapi.windows.WinDef.SECURITY_ATTRIBUTES;
 
 public class Kernel32Library {
 	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.loadLibrary("kernel32", Kernel32Interface.class, W32APIOptions.UNICODE_OPTIONS);
@@ -110,6 +110,8 @@ public class Kernel32Library {
 		HMODULE GetModuleHandle(String name);
 
 		boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped);
+		
+		HANDLE CreateEvent(SECURITY_ATTRIBUTES lpEventAttributes, boolean bManualReset, boolean bInitialState, String lpName);
 	}
 
 	public static HANDLE CreateFile(String name, int access, int sharing, SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template) {
@@ -161,5 +163,10 @@ public class Kernel32Library {
 
 	public static boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped) {
 		return INSTANCE.DeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
+	}
+	
+	public static HANDLE CreateEvent(SECURITY_ATTRIBUTES lpEventAttributes, boolean bManualReset, boolean bInitialState, String lpName) {
+		HANDLE h = INSTANCE.CreateEvent(lpEventAttributes, bManualReset, bInitialState, lpName);
+		return h;
 	}
 }
