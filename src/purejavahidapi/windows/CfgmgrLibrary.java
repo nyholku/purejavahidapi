@@ -35,7 +35,7 @@ import com.sun.jna.win32.W32APIOptions;
 
 public class CfgmgrLibrary {
 	public static int CR_SUCCESS = 0;
-	static CfgmgrInterface INSTANCE = (CfgmgrInterface) Native.loadLibrary("CfgMgr32", CfgmgrInterface.class,W32APIOptions.UNICODE_OPTIONS);
+	static CfgmgrInterface INSTANCE = (CfgmgrInterface) Native.load("CfgMgr32", CfgmgrInterface.class,W32APIOptions.UNICODE_OPTIONS);
 
 	public interface CfgmgrInterface extends Library {
 		int CM_Get_Parent(int[] pdnDevInst, int dnDevInst, int ulFlags);

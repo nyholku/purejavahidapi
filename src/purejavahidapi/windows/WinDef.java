@@ -32,13 +32,9 @@ package purejavahidapi.windows;
 import java.util.Arrays;
 import java.util.List;
 
+import com.sun.jna.*;
 import purejavahidapi.windows.SetupApiLibrary.GUID;
 
-import com.sun.jna.FromNativeContext;
-import com.sun.jna.IntegerType;
-import com.sun.jna.Pointer;
-import com.sun.jna.PointerType;
-import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary.StdCallCallback;
 
 public class WinDef {
@@ -51,7 +47,7 @@ public class WinDef {
 	public static HANDLE NULL = new HANDLE(Pointer.createConstant(0));
 
 	private static Pointer invalidPointerValue() {
-		return Pointer.createConstant(Pointer.SIZE == 8 ? -1 : 0xFFFFFFFFL);
+		return Pointer.createConstant(Native.POINTER_SIZE == 8 ? -1 : 0xFFFFFFFFL);
 	}
 
 	public static class PVOID extends PointerType {
@@ -109,7 +105,7 @@ public class WinDef {
         }
 
         public LONG_PTR(long value) {
-            super(Pointer.SIZE, value);
+            super(Native.POINTER_SIZE, value);
         }
 
         public Pointer toPointer() {
@@ -140,11 +136,11 @@ public class WinDef {
 	public static class UINT_PTR extends IntegerType {
 
 		public UINT_PTR() {
-			super(Pointer.SIZE);
+			super(Native.POINTER_SIZE);
 		}
 
 		public UINT_PTR(long value) {
-			super(Pointer.SIZE, value, true);
+			super(Native.POINTER_SIZE, value, true);
 		}
 
 		public Pointer toPointer() {

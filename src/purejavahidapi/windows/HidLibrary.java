@@ -43,7 +43,7 @@ import com.sun.jna.win32.StdCallLibrary;
 import purejavahidapi.windows.WinDef.HANDLE;
 
 public class HidLibrary {
-	static HidLibraryInterface INSTANCE = (HidLibraryInterface) Native.loadLibrary("hid", HidLibraryInterface.class);
+	static HidLibraryInterface INSTANCE = (HidLibraryInterface) Native.load("hid", HidLibraryInterface.class);
 
 	static public class HIDP_PREPARSED_DATA extends PointerType {
 	}

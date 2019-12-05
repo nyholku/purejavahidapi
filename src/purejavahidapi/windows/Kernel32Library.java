@@ -40,7 +40,7 @@ import purejavahidapi.windows.WinDef.OVERLAPPED;
 import purejavahidapi.windows.WinDef.SECURITY_ATTRIBUTES;
 
 public class Kernel32Library {
-	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.loadLibrary("kernel32", Kernel32Interface.class, W32APIOptions.UNICODE_OPTIONS);
+	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.load("kernel32", Kernel32Interface.class, W32APIOptions.UNICODE_OPTIONS);
 
 	public static final int ERROR_INSUFFICIENT_BUFFER = 122;
 	public static final int ERROR_INVALID_USER_BUFFER = 1784;

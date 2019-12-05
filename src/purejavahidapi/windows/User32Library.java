@@ -57,7 +57,7 @@ import purejavahidapi.windows.WinDef.WPARAM;
 
 @SuppressWarnings("serial")
 public class User32Library {
-	static User32Interface INSTANCE = (User32Interface) Native.loadLibrary("user32", User32Interface.class, W32APIOptions.UNICODE_OPTIONS);
+	static User32Interface INSTANCE = (User32Interface) Native.load("user32", User32Interface.class, W32APIOptions.UNICODE_OPTIONS);
 
     public static final int WS_EX_TOPMOST = 0x00000008;
     public static final int DEVICE_NOTIFY_WINDOW_HANDLE = 0x00000000;
