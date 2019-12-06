@@ -38,9 +38,13 @@ import purejavahidapi.windows.HidLibrary.*;
 import purejavahidapi.windows.SetupApiLibrary.HDEVINFO;
 import purejavahidapi.windows.SetupApiLibrary.SP_DEVICE_INTERFACE_DATA;
 import purejavahidapi.windows.SetupApiLibrary.SP_DEVINFO_DATA;
-import purejavahidapi.windows.WinDef.HANDLE;
+
+//import purejavahidapi.windows.WinDef.HANDLE;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
+import static com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE;
 import static purejavahidapi.windows.CfgmgrLibrary.*;
-import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
+//import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
+
 
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;

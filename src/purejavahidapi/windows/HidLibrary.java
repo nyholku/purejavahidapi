@@ -40,7 +40,8 @@ import com.sun.jna.Structure;
 import com.sun.jna.Union;
 import com.sun.jna.win32.StdCallLibrary;
 
-import purejavahidapi.windows.WinDef.HANDLE;
+//import purejavahidapi.windows.WinDef.HANDLE;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
 
 public class HidLibrary {
 	static HidLibraryInterface INSTANCE = (HidLibraryInterface) Native.load("hid", HidLibraryInterface.class);

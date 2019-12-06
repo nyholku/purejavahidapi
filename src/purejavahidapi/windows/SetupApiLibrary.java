@@ -125,10 +125,11 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
+import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.win32.W32APIOptions;
 
-import purejavahidapi.windows.WinDef.HANDLE;
-import purejavahidapi.windows.WinDef.HWND;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
+import com.sun.jna.platform.win32.WinDef.HWND;
 
 public class SetupApiLibrary {
 	static SetupApiInterface INSTANCE = (SetupApiInterface) Native.load("setupapi", SetupApiInterface.class,
@@ -292,7 +293,7 @@ public class SetupApiLibrary {
 		boolean SetupDiDeleteDeviceInterfaceData(HDEVINFO DeviceInfoSet, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData);
 
 		boolean SetupDiOpenDeviceInfo(HDEVINFO DeviceInfoSet, String DeviceInstanceId, HWND hwndParent, int OpenFlags,
-				SP_DEVINFO_DATA DeviceInfoData);
+									  SP_DEVINFO_DATA DeviceInfoData);
 	}
 
 	public static HDEVINFO SetupDiCreateDeviceInfoList(GUID ClassGuid, HWND hwndParent) {

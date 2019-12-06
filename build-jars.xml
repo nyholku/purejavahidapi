@@ -16,10 +16,12 @@
 
     <path id="compile">
       <pathelement location="lib/jna-5.5.0.jar"/>
+      <pathelement location="lib/jna-platform-5.5.0.jar"/>
     </path>
 
     <path id="examples">
       <pathelement location="lib/jna-5.5.0.jar"/>
+      <pathelement location="lib/jna-platform-5.5.0.jar"/>
       <pathelement location="${class}"/>
     </path>
 

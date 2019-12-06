@@ -36,7 +36,7 @@ import com.sun.jna.*;
 import purejavahidapi.windows.SetupApiLibrary.GUID;
 
 import com.sun.jna.win32.StdCallLibrary.StdCallCallback;
-
+/*
 public class WinDef {
 	public static final int DBT_DEVICEREMOVECOMPLETE = 0x8004;
 
@@ -388,3 +388,4 @@ public class WinDef {
 		LRESULT callback(HWND hwnd, int uMsg, WPARAM wParam, LPARAM lParam);
 	}
 }
+*/

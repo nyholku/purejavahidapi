@@ -29,13 +29,20 @@
  */
 package purejavahidapi.windows;
 
+import static com.sun.jna.platform.win32.DBT.*;
+import static com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE;
 import static purejavahidapi.windows.SetupApiLibrary.*;
 
 import com.sun.jna.WString;
 
+import com.sun.jna.platform.win32.DBT.*;
+import com.sun.jna.platform.win32.WinUser.*;
+import com.sun.jna.platform.win32.WinDef.*;
+
 import purejavahidapi.shared.SyncPoint;
-import purejavahidapi.windows.WinDef.*;
-import static purejavahidapi.windows.WinDef.*;
+//import purejavahidapi.windows.WinDef.*;
+//import static purejavahidapi.windows.WinDef.*;
+
 import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.User32Library.*;
 import static purejavahidapi.windows.WtsApi32Library.*;
@@ -55,7 +62,7 @@ public class DeviceRemovalHandler implements WindowProc {
 				if (hInst == null)
 					reportLastError();
 
-				WNDCLASSEX wndClassEx = new WNDCLASSEX();
+				User32Library.WNDCLASSEX wndClassEx = new User32Library.WNDCLASSEX();
 				wndClassEx.hInstance = hInst;
 				wndClassEx.lpfnWndProc = DeviceRemovalHandler.this;
 				wndClassEx.lpszClassName = wndClassName;
@@ -77,13 +84,13 @@ public class DeviceRemovalHandler implements WindowProc {
 				notificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
 				notificationFilter.dbcc_classguid = GUID_DEVINTERFACE_USB_DEVICE;
 
-				HDEVNOTIFY hDevNotify = RegisterDeviceNotification(hWnd, notificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE);
+				User32Library.HDEVNOTIFY hDevNotify = RegisterDeviceNotification(hWnd, notificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE);
 				if (hDevNotify == null)
 					reportLastError();
 
 				m_StartupSync.waitAndSync();
 				
-				MSG msg = new MSG();
+				User32Library.MSG msg = new User32Library.MSG();
 				while (GetMessage(msg, hWnd, 0, 0) != 0) {
 					TranslateMessage(msg);
 					DispatchMessage(msg);
@@ -162,7 +169,7 @@ public class DeviceRemovalHandler implements WindowProc {
 		switch (bhdr.dbch_devicetype) {
 			case DBT_DEVTYP_DEVICEINTERFACE: {
 				DEV_BROADCAST_DEVICEINTERFACE bdif = new DEV_BROADCAST_DEVICEINTERFACE(bhdr.getPointer());
-				handleDeviceRemoval(bdif.get_dbcc_name());
+				handleDeviceRemoval(bdif.getDbcc_name());
 				break;
 			}
 			default:

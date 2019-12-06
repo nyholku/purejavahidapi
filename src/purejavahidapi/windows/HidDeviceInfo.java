@@ -42,7 +42,8 @@ import com.sun.jna.Memory;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.HidLibrary.HIDP_PREPARSED_DATA;
-import purejavahidapi.windows.WinDef.HANDLE;
+//import purejavahidapi.windows.WinDef.HANDLE;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
 
 /* package*/class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
 

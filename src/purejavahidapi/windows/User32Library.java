@@ -40,20 +40,22 @@ import com.sun.jna.WString;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
-import purejavahidapi.windows.WinDef.ATOM;
-import purejavahidapi.windows.WinDef.HANDLE;
-import purejavahidapi.windows.WinDef.HBRUSH;
-import purejavahidapi.windows.WinDef.HCURSOR;
-import purejavahidapi.windows.WinDef.HICON;
-import purejavahidapi.windows.WinDef.HINSTANCE;
-import purejavahidapi.windows.WinDef.HMENU;
-import purejavahidapi.windows.WinDef.HWND;
-import purejavahidapi.windows.WinDef.LPARAM;
-import purejavahidapi.windows.WinDef.LPVOID;
-import purejavahidapi.windows.WinDef.LRESULT;
-import purejavahidapi.windows.WinDef.POINT;
-import purejavahidapi.windows.WinDef.PVOID;
-import purejavahidapi.windows.WinDef.WPARAM;
+//import purejavahidapi.windows.WinDef.ATOM;
+//import purejavahidapi.windows.WinDef.HANDLE;
+//import purejavahidapi.windows.WinDef.HBRUSH;
+//import purejavahidapi.windows.WinDef.HCURSOR;
+//import purejavahidapi.windows.WinDef.HICON;
+//import purejavahidapi.windows.WinDef.HINSTANCE;
+//import purejavahidapi.windows.WinDef.HMENU;
+//import purejavahidapi.windows.WinDef.HWND;
+//import purejavahidapi.windows.WinDef.LPARAM;
+//import purejavahidapi.windows.WinDef.LPVOID;
+//import purejavahidapi.windows.WinDef.LRESULT;
+//import purejavahidapi.windows.WinDef.POINT;
+//import purejavahidapi.windows.WinDef.PVOID;
+//import purejavahidapi.windows.WinDef.WPARAM;
+import com.sun.jna.platform.win32.WinDef.*;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
 
 @SuppressWarnings("serial")
 public class User32Library {

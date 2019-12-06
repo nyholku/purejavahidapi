@@ -29,6 +29,7 @@
  */
 package purejavahidapi.windows;
 
+import static com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE;
 import static purejavahidapi.windows.HidLibrary.HidD_FreePreparsedData;
 import static purejavahidapi.windows.HidLibrary.HidD_GetAttributes;
 import static purejavahidapi.windows.HidLibrary.HidD_GetPreparsedData;
@@ -37,18 +38,20 @@ import static purejavahidapi.windows.HidLibrary.HidD_SetOutputReport;
 import static purejavahidapi.windows.HidLibrary.HidP_GetCaps;
 import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
-import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
+//import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
 
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
+import com.sun.jna.platform.win32.WinBase.OVERLAPPED;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
 import purejavahidapi.shared.SyncPoint;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.HidLibrary.HIDP_PREPARSED_DATA;
-import purejavahidapi.windows.WinDef.HANDLE;
-import purejavahidapi.windows.WinDef.OVERLAPPED;
+//import purejavahidapi.windows.WinDef.HANDLE;
+//import purejavahidapi.windows.WinDef.OVERLAPPED;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
