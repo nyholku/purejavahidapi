@@ -29,13 +29,12 @@
  */
 package purejavahidapi.windows;
 
-//import purejavahidapi.windows.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.HWND;
 
 import com.sun.jna.Native;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
-
+/*
 public class WtsApi32Library {
 	public static final int NOTIFY_FOR_THIS_SESSION = 0;
 	
@@ -55,3 +54,4 @@ public class WtsApi32Library {
 		return INSTANCE.WTSUnRegisterSessionNotification(hWnd);
 	}
 }
+*/

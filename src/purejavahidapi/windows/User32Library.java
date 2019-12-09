@@ -56,7 +56,7 @@ import com.sun.jna.win32.W32APIOptions;
 //import purejavahidapi.windows.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
-
+/*
 @SuppressWarnings("serial")
 public class User32Library {
 	static User32Interface INSTANCE = (User32Interface) Native.load("user32", User32Interface.class, W32APIOptions.UNICODE_OPTIONS);
@@ -103,7 +103,7 @@ public class User32Library {
 
 		public int cbWndExtra;
 
-		/** The h instance. */
+		// The h instance.
 		public HINSTANCE hInstance;
 
 		public HICON hIcon;
@@ -220,3 +220,4 @@ public class User32Library {
 	}
 
 }
+*/

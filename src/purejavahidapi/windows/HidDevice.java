@@ -29,29 +29,33 @@
  */
 package purejavahidapi.windows;
 
-import static com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE;
+import static com.sun.jna.platform.win32.WinBase.*;
+import static com.sun.jna.platform.win32.WinBase.INFINITE;
+import static com.sun.jna.platform.win32.WinBase.WAIT_OBJECT_0;
+import static com.sun.jna.platform.win32.WinError.ERROR_DEVICE_NOT_CONNECTED;
+import static com.sun.jna.platform.win32.WinError.ERROR_IO_PENDING;
+import static com.sun.jna.platform.win32.WinError.ERROR_OPERATION_ABORTED;
 import static purejavahidapi.windows.HidLibrary.HidD_FreePreparsedData;
 import static purejavahidapi.windows.HidLibrary.HidD_GetAttributes;
 import static purejavahidapi.windows.HidLibrary.HidD_GetPreparsedData;
 import static purejavahidapi.windows.HidLibrary.HidD_SetFeature;
 import static purejavahidapi.windows.HidLibrary.HidD_SetOutputReport;
 import static purejavahidapi.windows.HidLibrary.HidP_GetCaps;
-import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.SetupApiLibrary.HIDP_STATUS_SUCCESS;
-//import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
+import static purejavahidapi.windows.Kernel32Library.*;
 
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
-import com.sun.jna.platform.win32.WinBase.OVERLAPPED;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinBase.*;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
+
 import purejavahidapi.shared.SyncPoint;
 import purejavahidapi.windows.HidLibrary.HIDD_ATTRIBUTES;
 import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.HidLibrary.HIDP_PREPARSED_DATA;
-//import purejavahidapi.windows.WinDef.HANDLE;
-//import purejavahidapi.windows.WinDef.OVERLAPPED;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -86,13 +90,13 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		HIDP_PREPARSED_DATA[] ppd = new HIDP_PREPARSED_DATA[1];
 		res = HidD_GetPreparsedData(handle, ppd);
 		if (!res) {
-			CloseHandle(handle);
+			Kernel32.INSTANCE.CloseHandle(handle);
 			return;
 		}
 		HIDP_CAPS caps = new HIDP_CAPS();
 		int nt_res = HidP_GetCaps(ppd[0], caps);
 		if (nt_res != HIDP_STATUS_SUCCESS) {
-			CloseHandle(handle);
+			Kernel32.INSTANCE.CloseHandle(handle);
 			return;
 		}
 		m_OutputReportLength = caps.OutputReportByteLength;
@@ -129,7 +133,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_ForceControlOutput = System.getProperty("purejavahidapi.forceControlOutput") != null;
 
 		// bManualReset parameter has to be set to true to work with WaitForSingleObject
-		m_OutputReportOverlapped.hEvent = CreateEvent(null, true, false, null);
+		m_OutputReportOverlapped.hEvent = Kernel32.INSTANCE.CreateEvent(null, true, false, null);
 	}
 
 	@Override
@@ -143,8 +147,8 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			m_Thread.interrupt();
 			m_SyncShutdown.waitAndSync();
 		}
-		CloseHandle(m_OutputReportOverlapped.hEvent);
-		CloseHandle(m_Handle);
+		Kernel32.INSTANCE.CloseHandle(m_OutputReportOverlapped.hEvent);
+		Kernel32.INSTANCE.CloseHandle(m_Handle);
 		m_Backend.removeDevice(m_HidDeviceInfo.getDeviceId());
 		m_Open = false;
 	}
@@ -157,13 +161,19 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			throw new IllegalArgumentException("this device supports no output reports");
 		// In Windows writeFile() to HID device data has to be preceded with the report
 		// number, regardless
+		/*
 		m_OutputReportMemory.write(0, new byte[] {
 				reportID
 		}, 0, 1);
 		m_OutputReportMemory.write(1, data, 0, length);
+		*/
+		byte[] abOutput = new byte[length + 1];
+		abOutput[0] = reportID;
+		System.arraycopy(data, 0, abOutput, 1, length);
+
 
 		if (!m_ForceControlOutput) {
-			ResetEvent(m_OutputReportOverlapped.hEvent);
+			Kernel32.INSTANCE.ResetEvent(m_OutputReportOverlapped.hEvent);
 			m_OutputReportOverlapped.Internal = null;
 			m_OutputReportOverlapped.InternalHigh = null;
 			m_OutputReportOverlapped.Offset = 0;
@@ -171,15 +181,15 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 			// In windows always attempt to write as many bytes as there are in the longest
 			// report plus one for the report number (even if zero ie not used)
-			if (!WriteFile(m_Handle, m_OutputReportMemory, m_OutputReportLength, null, m_OutputReportOverlapped)) {
-				if (GetLastError() != ERROR_IO_PENDING) {
+			if (!Kernel32.INSTANCE.WriteFile(m_Handle, abOutput, m_OutputReportLength, null, m_OutputReportOverlapped)) {
+				if (Kernel32.INSTANCE.GetLastError() != ERROR_IO_PENDING) {
 					// WriteFile() failed. Return error.
 					// register_error(dev, "WriteFile");
 					return -1;
 				}
 			}
 
-			if (WAIT_OBJECT_0 != WaitForSingleObject(m_OutputReportOverlapped.hEvent, 1000)) {
+			if (WAIT_OBJECT_0 != Kernel32.INSTANCE.WaitForSingleObject(m_OutputReportOverlapped.hEvent, 1000)) {
 				return -1;
 			}
 
@@ -194,6 +204,11 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 			return m_OutputReportBytesWritten[0] - 1;
 		} else {
+			m_OutputReportMemory.write(0, new byte[] {
+					reportID
+			}, 0, 1);
+			m_OutputReportMemory.write(1, data, 0, length);
+
 			if (!HidD_SetOutputReport(m_Handle, m_OutputReportMemory.getByteArray(0, length + 1), length + 1)) {
 				// HidD_SetOutputReport() failed. Return error.
 				// register_error(dev, "HidD_SetOutputReport");
@@ -244,7 +259,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		Pointer buffer = new Memory(data.length);
 		if (!DeviceIoControl(m_Handle, IOCTL_HID_GET_FEATURE, buffer, length, buffer, length, bytes, ol)) {
 			// System.out.println(GetLastError());
-			if (GetLastError() != ERROR_IO_PENDING)
+			if (Kernel32.INSTANCE.GetLastError() != ERROR_IO_PENDING)
 				return -1;
 		}
 
@@ -261,11 +276,11 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 		int[] numBytesRead = { 0 };
 		OVERLAPPED overlapped = new OVERLAPPED();
-		overlapped.hEvent = CreateEvent(null, true, true, null);
+		overlapped.hEvent = Kernel32.INSTANCE.CreateEvent(null, true, true, null);
 		Memory readBuffer = new Memory(m_InputReportLength);
 
 		while (!m_StopThread) {
-			ResetEvent(overlapped.hEvent);
+			Kernel32.INSTANCE.ResetEvent(overlapped.hEvent);
 			numBytesRead[0] = 0;
 			overlapped.Internal = null;
 			overlapped.InternalHigh = null;
@@ -278,33 +293,33 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			// is always preceded with the report number (even if not used in
 			// case of which it is zero)
 			if (!ReadFile(m_Handle, readBuffer, m_InputReportLength, numBytesRead, overlapped)) {
-				if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
+				if (Kernel32.INSTANCE.GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 					break; // early exit if the device disappears
-				if (GetLastError() != ERROR_IO_PENDING) {
+				if (Kernel32.INSTANCE.GetLastError() != ERROR_IO_PENDING) {
 					CancelIo(m_Handle);
-					System.err.println("ReadFile failed with GetLastError()==" + GetLastError());
+					System.err.println("ReadFile failed with GetLastError()==" + Kernel32.INSTANCE.GetLastError());
 				}
 
 				if (WAIT_OBJECT_0 != WaitForSingleObject(overlapped.hEvent, INFINITE)) {
-					System.err.println("WaitForSingleObject failed with GetLastError()==" + GetLastError());
+					System.err.println("WaitForSingleObject failed with GetLastError()==" + Kernel32.INSTANCE.GetLastError());
 				}
 
 				// Update structure from native code
 				overlapped.read();
 
 				if (!GetOverlappedResult(m_Handle, overlapped, numBytesRead, false/* don't need to wait */)) {
-					if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
+					if (Kernel32.INSTANCE.GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 						break; // early exit if the device disappears
-					if (m_StopThread && GetLastError() == ERROR_OPERATION_ABORTED)
+					if (m_StopThread && Kernel32.INSTANCE.GetLastError() == ERROR_OPERATION_ABORTED)
 						break; // on close
-					System.err.println("GetOverlappedResult failed with GetLastError()==" + GetLastError());
+					System.err.println("GetOverlappedResult failed with GetLastError()==" + Kernel32.INSTANCE.GetLastError());
 				}
 			}
 
 			processInputReport(readBuffer, numBytesRead[0]);
 		}
 
-		CloseHandle(overlapped.hEvent);
+		Kernel32.INSTANCE.CloseHandle(overlapped.hEvent);
 		m_SyncShutdown.waitAndSync();
 	}
 

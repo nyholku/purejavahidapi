@@ -32,7 +32,7 @@ package purejavahidapi.windows;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.win32.W32APIOptions;
-
+/*
 public class CfgmgrLibrary {
 	public static int CR_SUCCESS = 0;
 	static CfgmgrInterface INSTANCE = (CfgmgrInterface) Native.load("CfgMgr32", CfgmgrInterface.class,W32APIOptions.UNICODE_OPTIONS);
@@ -59,3 +59,4 @@ public class CfgmgrLibrary {
 	}
 
 }
+*/
