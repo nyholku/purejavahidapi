@@ -184,7 +184,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			}
 
 			if (WAIT_OBJECT_0 != Kernel32.INSTANCE.WaitForSingleObject(m_OutputReportOverlapped.hEvent, 1000)) {
-				return -1;
+				return -2;
 			}
 
 			// Update structure from native code
@@ -193,7 +193,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			if (!GetOverlappedResult(m_Handle, m_OutputReportOverlapped, m_OutputReportBytesWritten, false/* don't need to wait */)) {
 				// The Write operation failed.
 				// register_error(dev, "WriteFile");
-				return -1;
+				return -3;
 			}
 
 			return m_OutputReportBytesWritten[0] - 1;
@@ -206,7 +206,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			if (!HidD_SetOutputReport(m_Handle, m_OutputReportMemory.getByteArray(0, length + 1), length + 1)) {
 				// HidD_SetOutputReport() failed. Return error.
 				// register_error(dev, "HidD_SetOutputReport");
-				return -1;
+				return -4;
 			}
 
 			return length;
