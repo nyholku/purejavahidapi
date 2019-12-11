@@ -31,9 +31,6 @@ package purejavahidapi.windows;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-//import com.sun.jna.platform.win32.WinBase;
-//import com.sun.jna.platform.win32.WinDef;
-//import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
@@ -41,10 +38,6 @@ import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.platform.win32.WinDef.HMODULE;
 import com.sun.jna.platform.win32.WinBase.OVERLAPPED;
 import com.sun.jna.platform.win32.WinBase.SECURITY_ATTRIBUTES;
-//import purejavahidapi.windows.WinDef.HANDLE;
-//import purejavahidapi.windows.WinDef.HMODULE;
-//import purejavahidapi.windows.WinDef.OVERLAPPED;
-//import purejavahidapi.windows.WinDef.SECURITY_ATTRIBUTES;
 
 public class Kernel32Library {
 	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.load("kernel32", Kernel32Interface.class, W32APIOptions.UNICODE_OPTIONS);

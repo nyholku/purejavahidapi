@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-//import com.sun.jna.platform.win32.SetupApi;
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.Cfgmgr32;
 import com.sun.jna.ptr.IntByReference;
@@ -51,13 +50,6 @@ import static com.sun.jna.platform.win32.Kernel32.*;
 import static com.sun.jna.platform.win32.Cfgmgr32.*;
 
 import com.sun.jna.Memory;
-
-//import static com.sun.jna.platform.win32.SetupApi.*;
-//import com.sun.jna.platform.win32.Guid.GUID;
-
-import com.sun.jna.win32.W32APIOptions;
-
-
 import com.sun.jna.Native;
 
 import static purejavahidapi.windows.SetupApiLibrary.*;

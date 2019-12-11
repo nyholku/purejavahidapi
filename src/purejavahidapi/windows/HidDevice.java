@@ -161,12 +161,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			throw new IllegalArgumentException("this device supports no output reports");
 		// In Windows writeFile() to HID device data has to be preceded with the report
 		// number, regardless
-		/*
-		m_OutputReportMemory.write(0, new byte[] {
-				reportID
-		}, 0, 1);
-		m_OutputReportMemory.write(1, data, 0, length);
-		*/
 		byte[] abOutput = new byte[length + 1];
 		abOutput[0] = reportID;
 		System.arraycopy(data, 0, abOutput, 1, length);
