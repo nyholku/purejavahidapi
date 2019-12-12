@@ -40,7 +40,7 @@ import purejavahidapi.macosx.CoreFoundationLibrary.CFArrayRef;
 import com.sun.jna.*;
 
 public class IOHIDManagerLibrary {
-	private static IOHIDManagerLib INSTANCE = (IOHIDManagerLib) Native.loadLibrary("IOKit", IOHIDManagerLib.class);
+	private static IOHIDManagerLib INSTANCE = (IOHIDManagerLib) Native.load("IOKit", IOHIDManagerLib.class);
 
 	public static final int kIOHIDOptionsTypeNone = 0;
 	public static final int kIOHIDOptionsTypeSeizeDevice = 1;

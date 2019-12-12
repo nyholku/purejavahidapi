@@ -127,11 +127,11 @@ import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.win32.W32APIOptions;
 
-import purejavahidapi.windows.WinDef.HANDLE;
-import purejavahidapi.windows.WinDef.HWND;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
+import com.sun.jna.platform.win32.WinDef.HWND;
 
 public class SetupApiLibrary {
-	static SetupApiInterface INSTANCE = (SetupApiInterface) Native.loadLibrary("setupapi", SetupApiInterface.class,
+	static SetupApiInterface INSTANCE = (SetupApiInterface) Native.load("setupapi", SetupApiInterface.class,
 			W32APIOptions.UNICODE_OPTIONS);
 
 	public static final int DIGCF_PRESENT = 2;
@@ -227,7 +227,7 @@ public class SetupApiLibrary {
 	final static int ANYSIZE_ARRAY = 1;
 
 	static public class SP_DEVICE_INTERFACE_DETAIL_DATA_A extends Structure {
-		public int cbSize = Pointer.SIZE == 8 ? 8 : 5; // Note 1
+		public int cbSize = Native.POINTER_SIZE == 8 ? 8 : 5; // Note 1
 		// Note 1, I believe this structure is packed in Windows API and as this field
 		// is initialized with sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA) it gets the size
 		// 5 in 32 bit process but 8 in 64 bit process...i think! Nasty little detail
@@ -292,7 +292,7 @@ public class SetupApiLibrary {
 		boolean SetupDiDeleteDeviceInterfaceData(HDEVINFO DeviceInfoSet, SP_DEVICE_INTERFACE_DATA DeviceInterfaceData);
 
 		boolean SetupDiOpenDeviceInfo(HDEVINFO DeviceInfoSet, String DeviceInstanceId, HWND hwndParent, int OpenFlags,
-				SP_DEVINFO_DATA DeviceInfoData);
+									  SP_DEVINFO_DATA DeviceInfoData);
 	}
 
 	public static HDEVINFO SetupDiCreateDeviceInfoList(GUID ClassGuid, HWND hwndParent) {

@@ -38,7 +38,7 @@ import com.sun.jna.*;
 
 public class CoreFoundationLibrary {
 	private static String m_NativeLibName = "CoreFoundation";
-	private static CoreFoundationLibraryInterface INSTANCE = (CoreFoundationLibraryInterface) Native.loadLibrary(m_NativeLibName, CoreFoundationLibraryInterface.class);
+	private static CoreFoundationLibraryInterface INSTANCE = (CoreFoundationLibraryInterface) Native.load(m_NativeLibName, CoreFoundationLibraryInterface.class);
 	private static NativeLibrary NINSTANCE = NativeLibrary.getInstance(m_NativeLibName);
 
 	// --------------------------------------------------------------------------------
