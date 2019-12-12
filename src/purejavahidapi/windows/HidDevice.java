@@ -59,6 +59,7 @@ import purejavahidapi.windows.HidLibrary.HIDP_PREPARSED_DATA;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.util.Arrays;
 
 public class HidDevice extends purejavahidapi.HidDevice {
 	private WindowsBackend m_Backend;
@@ -73,6 +74,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private SyncPoint m_SyncShutdown;
 	private boolean m_StopThread;
 	private boolean m_ForceControlOutput;
+	private byte[] m_OutputReportArray;
 
 	/* package */ HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, WindowsBackend backend) {
 		HANDLE handle = WindowsBackend.openDeviceHandle(deviceInfo.getPath(), false);
@@ -100,8 +102,10 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			return;
 		}
 		m_OutputReportLength = caps.OutputReportByteLength;
-		if (m_OutputReportLength > 0)
+		if (m_OutputReportLength > 0) {
 			m_OutputReportMemory = new Memory(m_OutputReportLength);
+			m_OutputReportArray = new byte[m_OutputReportLength];
+		}
 		m_OutputReportOverlapped = new OVERLAPPED();
 		m_OutputReportBytesWritten = new int[] {
 				0
@@ -161,9 +165,9 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			throw new IllegalArgumentException("this device supports no output reports");
 		// In Windows writeFile() to HID device data has to be preceded with the report
 		// number, regardless
-		byte[] abOutput = new byte[length + 1];
-		abOutput[0] = reportID;
-		System.arraycopy(data, 0, abOutput, 1, length);
+		Arrays.fill(m_OutputReportArray, (byte)0);
+		m_OutputReportArray[0] = reportID;
+		System.arraycopy(data, 0, m_OutputReportArray, 1, length);
 
 
 		if (!m_ForceControlOutput) {
@@ -175,7 +179,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 			// In windows always attempt to write as many bytes as there are in the longest
 			// report plus one for the report number (even if zero ie not used)
-			if (!Kernel32.INSTANCE.WriteFile(m_Handle, abOutput, m_OutputReportLength, null, m_OutputReportOverlapped)) {
+			if (!Kernel32.INSTANCE.WriteFile(m_Handle, m_OutputReportArray, m_OutputReportLength, null, m_OutputReportOverlapped)) {
 				if (Kernel32.INSTANCE.GetLastError() != ERROR_IO_PENDING) {
 					// WriteFile() failed. Return error.
 					// register_error(dev, "WriteFile");
