@@ -5,7 +5,7 @@
 
     <groupId>purejavahidapi</groupId>
     <artifactId>purejavahidapi</artifactId>
-    <version>0.0.13</version>
+    <version>0.0.14</version>
     <packaging>jar</packaging>
 
     <name>Pure Java HID-API</name>
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>5.4.0</version>
+            <version>5.5.0</version>
         </dependency>
     </dependencies>
 </project>
