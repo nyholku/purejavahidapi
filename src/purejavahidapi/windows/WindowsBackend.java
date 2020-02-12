@@ -139,7 +139,7 @@ public class WindowsBackend extends Backend {
 				while (driverNameChars[driverNameLen++] != 0)
 					;
 				String drivername = new String(driverNameChars, 0, driverNameLen - 1);
-				if ("HIDClass".equals(drivername)) {
+				if ("HIDClass".equals(drivername) || "BarcodeScanner".equals(drivername)) {
 					if (!SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_DRIVER, null, driverNameChars, driverNameChars.length, null)) {// ok, found a driver
 						if (GetLastError() != ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
 							reportLastError();
