@@ -43,7 +43,7 @@ public class UdevLibrary {
 
 	// OBSOLETE class: hid_device
 
-	static UdevInterface INSTANCE = (UdevInterface) Native.loadLibrary("udev", UdevInterface.class);
+	static UdevInterface INSTANCE = (UdevInterface) Native.load("udev", UdevInterface.class);
 
 	public final static int BUS_USB = 0x03;
 	public final static int BUS_BLUETOOTH = 0x05;

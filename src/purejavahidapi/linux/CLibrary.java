@@ -11,7 +11,7 @@ import com.sun.jna.NativeLong;
 import com.sun.jna.Structure;
 
 public class CLibrary {
-	static CLibraryInterface INSTANCE = (CLibraryInterface) Native.loadLibrary("c", CLibraryInterface.class);
+	static CLibraryInterface INSTANCE = (CLibraryInterface) Native.load("c", CLibraryInterface.class);
 
 	public static short POLLIN = 0x0001;
 
