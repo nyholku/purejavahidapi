@@ -36,7 +36,6 @@ import static purejavahidapi.windows.SetupApiLibrary.*;
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase.OVERLAPPED;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 
@@ -94,14 +93,14 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_OutputReportBytesWritten = new int[] { 0 };
 		m_OutputReportOverlapped.setAutoRead(false);
 		m_OutputReportOverlapped.setAutoWrite(false);
-		m_OutputReportOverlapped.hEvent = Kernel32.INSTANCE.CreateEvent(null, false, false, null);
+		m_OutputReportOverlapped.hEvent = CreateEvent(null, false, false, null);
 		m_OutputReportOverlapped.writeField("hEvent");
 
 		m_InputReportLength = caps.InputReportByteLength;
 		m_InputReportOverlapped = new OVERLAPPED();
 		m_InputReportOverlapped.setAutoRead(false);
 		m_InputReportOverlapped.setAutoWrite(false);
-		m_InputReportOverlapped.hEvent = Kernel32.INSTANCE.CreateEvent(null, false, false, null);
+		m_InputReportOverlapped.hEvent = CreateEvent(null, false, false, null);
 		m_InputReportOverlapped.writeField("hEvent");
 		if (m_InputReportLength > 0) {
 			m_InputReportMemory = new Memory(m_InputReportLength);
