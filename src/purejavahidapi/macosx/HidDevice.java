@@ -123,7 +123,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				// Run the event loop, CFRunLoopRunInMode(), whick will dispatch HID input reports
 				int code;
 				while (!m_StopThread && !m_Disconnected) {
-					code = CFRunLoopRunInMode(m_CFRunLoopMode, 1000/* sec */, false);
+					code = CFRunLoopRunInMode(m_CFRunLoopMode, 1/* sec */, false);
 					// Return if the device has been disconnected 
 					if (code == kCFRunLoopRunFinished) {
 						m_Disconnected = true;

@@ -29,7 +29,9 @@
  */
 package purejavahidapi.windows;
 
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
@@ -40,8 +42,12 @@ import com.sun.jna.platform.win32.WinBase.OVERLAPPED;
 import com.sun.jna.platform.win32.WinBase.SECURITY_ATTRIBUTES;
 
 public class Kernel32Library {
-	static Kernel32Interface INSTANCE = (Kernel32Interface) Native.load("kernel32", Kernel32Interface.class, W32APIOptions.UNICODE_OPTIONS);
-
+	static Kernel32Interface INSTANCE;
+	static {
+	  //INSTANCE = (Kernel32Interface) Native.load("kernel32", Kernel32Interface.class, W32APIOptions.UNICODE_OPTIONS);
+      Native.register(Kernel32InterfaceWithDirectMapping.class, NativeLibrary.getInstance("kernel32", com.sun.jna.win32.W32APIOptions.ASCII_OPTIONS));
+      INSTANCE = new Kernel32InterfaceWithDirectMapping();
+	}
 	public static final int ERROR_INSUFFICIENT_BUFFER = 122;
 	public static final int ERROR_INVALID_USER_BUFFER = 1784;
 	public static final int ERROR_NO_MORE_ITEMS = 259;
@@ -110,8 +116,53 @@ public class Kernel32Library {
 		HMODULE GetModuleHandle(String name);
 
 		boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped);
-		
+
 		HANDLE CreateEvent(SECURITY_ATTRIBUTES lpEventAttributes, boolean bManualReset, boolean bInitialState, String lpName);
+	}
+
+	public static class Kernel32InterfaceWithDirectMapping implements Kernel32Interface {
+		native public HANDLE CreateFile(String name, int access, int mode, SECURITY_ATTRIBUTES security, int create, int atteribs, Pointer template) throws LastErrorException;
+
+		native public boolean WriteFile(HANDLE hFile, byte[] buf, int wrn, int[] nwrtn, Pointer lpOverlapped) throws LastErrorException;
+
+		native public boolean WriteFile(HANDLE hFile, Pointer buf, int wrn, int[] nwrtn, Pointer lpOverlapped) throws LastErrorException;
+
+		native public boolean ReadFile(HANDLE hFile, byte[] buf, int rdn, int[] nrd, Pointer lpOverlapped) throws LastErrorException;
+
+		native public boolean ReadFile(HANDLE hFile, Pointer lpBuffer, int rdn, int[] nrd, Pointer lpOverlapped) throws LastErrorException;
+
+		native public boolean FlushFileBuffers(HANDLE hFile) throws LastErrorException;
+
+		native public boolean PurgeComm(HANDLE hFile, int qmask) throws LastErrorException;
+
+		native public boolean CancelIo(HANDLE hFile) throws LastErrorException;
+
+		native public boolean CloseHandle(HANDLE hFile) throws LastErrorException;
+
+		native public HANDLE CreateEvent(SECURITY_ATTRIBUTES lpEventAttributes, boolean bManualReset, boolean bInitialState, String lpName) throws LastErrorException;
+
+		native public boolean ResetEvent(HANDLE hEvent) throws LastErrorException;
+
+		native public boolean SetEvent(HANDLE hEvent) throws LastErrorException;
+
+		native public int WaitForSingleObject(HANDLE hHandle, int dwMilliseconds);
+
+		native public boolean GetOverlappedResult(HANDLE hFile, Pointer lpOverlapped, int[] lpNumberOfBytesTransferred, boolean bWait) throws LastErrorException;
+
+		native public int FormatMessageW(int flags, Pointer src, int msgId, int langId, Pointer dst, int sze, Pointer va_list);
+
+		native public boolean CancelIoEx(HANDLE hFile, OVERLAPPED lpOverlapped);
+
+		native public boolean WriteFile(HANDLE hFile, Pointer buf, int wrn, int[] nwrtn, OVERLAPPED lpOverlapped);
+
+		native public boolean ReadFile(HANDLE hFile, Pointer buf, int rdn, int[] nrd, OVERLAPPED lpOverlapped);
+
+		native public boolean GetOverlappedResult(HANDLE hFile, OVERLAPPED lpOverlapped, int[] lpNumberOfBytesTransferred, boolean bWait);
+
+		native public HMODULE GetModuleHandle(String name);
+
+		native public boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped);
+
 	}
 
 	public static HANDLE CreateFile(String name, int access, int sharing, SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template) {
@@ -164,7 +215,7 @@ public class Kernel32Library {
 	public static boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped) {
 		return INSTANCE.DeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
 	}
-	
+
 	public static HANDLE CreateEvent(SECURITY_ATTRIBUTES lpEventAttributes, boolean bManualReset, boolean bInitialState, String lpName) {
 		HANDLE h = INSTANCE.CreateEvent(lpEventAttributes, bManualReset, bInitialState, lpName);
 		return h;
