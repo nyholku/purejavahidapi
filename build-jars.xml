@@ -5,7 +5,7 @@
 
     <property name="build" value="${basedir}/build"/>
     <property name="src" value="${basedir}/src"/>
-    <property name="dist" value="${basedir}/bin"/>
+    <property name="dist" value="${basedir}/jar"/>
     <property name="example" value="${basedir}/example"/>
     <property name="class" value="${build}/classes"/>
     <property name="class.example" value="${build}/example"/>
@@ -27,9 +27,8 @@
 
 	</target>
 
-  <target name="clear" depends="init">
+  <target name="clean" depends="init">
     <delete dir="${build}"/>
-    <delete dir="${dist}"/>
   </target>
 
   <target name="compile" depends="init">
