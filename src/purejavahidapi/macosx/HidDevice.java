@@ -334,6 +334,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 		if (Thread.currentThread() != m_Thread) {
 			// Notify the read thread that it can shut down now. 
+			m_Thread.interrupt();
 			m_SyncShutdown.waitAndSync();
 
 			// Wait for the tread to close down
