@@ -162,7 +162,6 @@ public class Kernel32Library {
 		native public HMODULE GetModuleHandle(String name);
 
 		native public boolean DeviceIoControl(HANDLE hDevice, int dwIoControlCode, Pointer lpInBuffer, int nInBufferSize, Pointer lpOutBuffer, int nOutBufferSize, int[] lpBytesReturned, OVERLAPPED lpOverlapped);
-
 	}
 
 	public static HANDLE CreateFile(String name, int access, int sharing, SECURITY_ATTRIBUTES security, int create, int attribs, Pointer template) {
