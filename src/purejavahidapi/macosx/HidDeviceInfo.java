@@ -46,8 +46,8 @@ import static purejavahidapi.macosx.HidDevice.*;
 		m_SerialNumberString = getStringProperty(dev, CFSTR(kIOHIDSerialNumberKey));
 		m_ProductString = getStringProperty(dev, CFSTR(kIOHIDProductKey));
 		m_ReleaseNumber = (short) getIntProperty(dev, CFSTR(kIOHIDVersionNumberKey));
-		m_UsagePage = (short) getIntProperty(dev, CFSTR(kIOHIDPrimaryUsageKey));
-
+		m_UsagePage = (short) getIntProperty(dev, CFSTR(kIOHIDPrimaryUsagePageKey));
+		m_UsageId = (short) getIntProperty(dev, CFSTR(kIOHIDPrimaryUsageKey));
 	}
 
 }
