@@ -33,20 +33,26 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.sun.jna.*;
+import com.sun.jna.platform.win32.Cfgmgr32;
+import com.sun.jna.ptr.IntByReference;
 import purejavahidapi.shared.Backend;
 import purejavahidapi.windows.HidLibrary.*;
 import purejavahidapi.windows.SetupApiLibrary.HDEVINFO;
 import purejavahidapi.windows.SetupApiLibrary.SP_DEVICE_INTERFACE_DATA;
 import purejavahidapi.windows.SetupApiLibrary.SP_DEVINFO_DATA;
-import purejavahidapi.windows.WinDef.HANDLE;
-import static purejavahidapi.windows.CfgmgrLibrary.*;
-import static purejavahidapi.windows.WinDef.INVALID_HANDLE_VALUE;
 
+import com.sun.jna.platform.win32.WinNT.HANDLE;
+
+import static com.sun.jna.platform.win32.Kernel32.INSTANCE;
+import static com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE;
+import static com.sun.jna.platform.win32.Kernel32.*;
+import static com.sun.jna.platform.win32.Cfgmgr32.*;
+
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
 
 import static purejavahidapi.windows.SetupApiLibrary.*;
-import static purejavahidapi.windows.Kernel32Library.*;
 import static purejavahidapi.windows.HidLibrary.*;
 
 public class WindowsBackend extends Backend {
@@ -98,14 +104,14 @@ public class WindowsBackend extends Backend {
 				HANDLE devHandle = INVALID_HANDLE_VALUE;
 
 				if (!SetupDiEnumDeviceInterfaces(device_info_set, null, InterfaceClassGuid, deviceIndex, device_interface_data)) {
-					if (GetLastError() == ERROR_NO_MORE_ITEMS)
+					if (INSTANCE.GetLastError() == ERROR_NO_MORE_ITEMS)
 						break;
 					reportLastError();
 				}
 
 				int[] required_size = { 0 };
 				if (!SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, null, 0, required_size, null)) {
-					if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+					if (INSTANCE.GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 						reportLastError();
 				}
 
@@ -116,7 +122,7 @@ public class WindowsBackend extends Backend {
 					if (SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null))
 						break; // ok, we guessed right so we can move on
 					device_interface_detail_data = null;
-					if (GetLastError() == ERROR_INVALID_USER_BUFFER)
+					if (INSTANCE.GetLastError() == ERROR_INVALID_USER_BUFFER)
 						continue; // guessed from, try again with next value
 					reportLastError(); // something else went wrong, report it
 				}
@@ -141,7 +147,7 @@ public class WindowsBackend extends Backend {
 				String drivername = new String(driverNameChars, 0, driverNameLen - 1);
 				if ("HIDClass".equals(drivername)) {
 					if (!SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_DRIVER, null, driverNameChars, driverNameChars.length, null)) {// ok, found a driver
-						if (GetLastError() != ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty 
+						if (INSTANCE.GetLastError() != ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty
 							reportLastError();
 						continue;
 					}
@@ -151,16 +157,22 @@ public class WindowsBackend extends Backend {
 						reportLastError();
 
 					String deviceId = new String(deviceIdChars);
-					int[] parent = { devinfo_data.DevInst };
-					while (CM_Get_Parent(parent, parent[0], 0) == 0) {
-						int[] parentIdLen = { 0 };
-						if (CM_Get_Device_ID_Size(parentIdLen, parent[0], 0) != CR_SUCCESS)
+					int parent = devinfo_data.DevInst;
+					IntByReference rParent = new IntByReference();
+
+					while (Cfgmgr32.INSTANCE.CM_Get_Parent(rParent, parent, 0) == 0) {
+						parent = rParent.getValue();
+
+						IntByReference iParentIdLen = new IntByReference(0);
+						if (Cfgmgr32.INSTANCE.CM_Get_Device_ID_Size(iParentIdLen, parent, 0) != CR_SUCCESS)
 							reportLastError();
-						parentIdLen[0]++;
-						char[] parentIdChars = new char[parentIdLen[0]];
-						if (CM_Get_Device_ID(parent[0], parentIdChars, parentIdLen[0], 0) != CR_SUCCESS)
+						int parentIdLen = iParentIdLen.getValue() + 1;
+
+						Memory mIdChars = new Memory(parentIdLen * 2);
+						if (Cfgmgr32.INSTANCE.CM_Get_Device_ID(parent, mIdChars, parentIdLen, 0) != CR_SUCCESS)
 							reportLastError();
-						String parentId = new String(parentIdChars, 0, parentIdLen[0] - 1);
+						String parentId = mIdChars.getString(0);
+
 						if (parentId.startsWith("USB\\")) {
 							deviceId = parentId;
 							break;
@@ -180,7 +192,7 @@ public class WindowsBackend extends Backend {
 					HidD_GetAttributes(devHandle, attrib);
 					list.add(new HidDeviceInfo(path, deviceId, devHandle, attrib));
 
-					CloseHandle(devHandle);
+					INSTANCE.CloseHandle(devHandle);
 				}
 
 			}
@@ -204,7 +216,7 @@ public class WindowsBackend extends Backend {
 		int desired_access = (enumerate) ? 0 : (GENERIC_WRITE | GENERIC_READ);
 		int share_mode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 
-		handle = CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, null);
+		handle = INSTANCE.CreateFile(path, desired_access, share_mode, null, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, null);
 
 		return handle;
 	}
