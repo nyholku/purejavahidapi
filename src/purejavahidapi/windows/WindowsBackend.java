@@ -185,7 +185,7 @@ public class WindowsBackend extends Backend {
 					// recreate as above when opening the device
 					devHandle = openDeviceHandle(path, true);
 					if (devHandle == INVALID_HANDLE_VALUE)
-						break;
+						continue;
 
 					HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
 					attrib.Size = new NativeLong(attrib.size());
