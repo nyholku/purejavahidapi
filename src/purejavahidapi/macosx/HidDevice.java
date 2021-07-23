@@ -323,16 +323,24 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			return -1;
 	}
 
-	synchronized public int setOutputReport(byte reportID, byte[] data, int length) {
+	synchronized public int setOutputReport(byte reportId, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		return setReport(kIOHIDReportTypeOutput, reportID, data, length);
+		int i = reportId != 0 ? 1 : 0;
+		byte[] temp = new byte[length + i];
+		temp[0] = reportId;
+		System.arraycopy(data, 0, temp, i, length);
+		return setReport(kIOHIDReportTypeOutput, reportId, temp, length+i);
 	}
 
 	synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		return setReport(kIOHIDReportTypeFeature, reportId, data, length);
+		int i = reportId != 0 ? 1 : 0;
+		byte[] temp = new byte[length + i];
+		temp[0] = reportId;
+		System.arraycopy(data, 0, temp, i, length);
+		return setReport(kIOHIDReportTypeFeature, reportId, temp, length + i);
 	}
 
 	synchronized public int setFeatureReport(byte[] data, int length) {
