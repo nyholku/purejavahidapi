@@ -53,12 +53,12 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	private SyncPoint m_SyncShutdown;
 	private boolean m_StopThread;
 	private byte[] m_InputReportBytes;
-	private byte[] m_OutputReportBytes;
+	private byte[] m_GetFeatureReportBytes;
 
-	/* package */HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, LinuxBackend backend) throws IOException {
+	/* package */ HidDevice(purejavahidapi.HidDeviceInfo deviceInfo, LinuxBackend backend) throws IOException {
 		m_Backend = backend;
 		m_HidDeviceInfo = deviceInfo;
-		udev udev=udev_new();
+		udev udev = udev_new();
 		udev_device raw_dev = udev_device_new_from_syspath(udev, m_HidDeviceInfo.getPath());
 		String dev_path = udev_device_get_devnode(raw_dev);
 		udev_unref(udev);
@@ -67,7 +67,6 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		if (m_DeviceHandle <= 0)
 			throw new IOException("open() failed, errno " + Native.getLastError());
 
-
 		int[] pipes = new int[2];
 		int piperes = pipe(pipes);
 		if (piperes != 0)
@@ -75,27 +74,26 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_NudgePipeReadHandle = pipes[0];
 		m_NudgePipeWriteHandle = pipes[1];
 
-		// Get the report descriptor 
+		// Get the report descriptor
 		int[] desc_size = { 0 };
 		int res;
 		hidraw_report_descriptor rpt_desc = new hidraw_report_descriptor();
-		
-		// Get Report Descriptor Size 
+
+		// Get Report Descriptor Size
 
 		res = ioctl(m_DeviceHandle, HIDIOCGRDESCSIZE, desc_size);
 		if (res < 0) // FIXME ERROR HANDLING
 			throw new IOException("ioctl(...HIDIOCGRDESCSIZE..) failed"); // perror("HIDIOCGRDESCSIZE");
 
-		// Get Report Descriptor 
+		// Get Report Descriptor
 		rpt_desc.size = desc_size[0];
 		res = ioctl(m_DeviceHandle, HIDIOCGRDESC, rpt_desc);
 		if (res < 0)
 			throw new IOException("ioctl(...HIDIOCGRDESC..) failed");
-		// Determine if this device uses numbered reports. 
+		// Determine if this device uses numbered reports.
 		m_UsesNumberedReports = uses_numbered_reports(rpt_desc.value, rpt_desc.size);
 
 		m_InputReportBytes = new byte[4096 + 1];
-		m_OutputReportBytes = new byte[4096 + 1];
 
 		m_SyncStart = new SyncPoint(2);
 		m_SyncShutdown = new SyncPoint(2);
@@ -176,21 +174,19 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			throw new IllegalStateException("device not open");
 		// In Linux write() to HID device data is preceded with the report number only if numbered reports are used
 		//
-		//   "The first byte of the buffer passed to write() should be set to the report
-		//   number.  If the device does not use numbered reports, the first byte should
-		//   be set to 0. The report data itself should begin at the second byte."
+		// "The first byte of the buffer passed to write() should be set to the report
+		// number. If the device does not use numbered reports, the first byte should
+		// be set to 0. The report data itself should begin at the second byte."
 		//
-		//   References:
-		//   - https://www.kernel.org/doc/Documentation/hid/hidraw.txt
-		//   - http://www.usb.org/developers/hidpage/HID1_11.pdf
-		if (m_UsesNumberedReports)
-			m_OutputReportBytes[0] = reportID;
-		else
-			m_OutputReportBytes[0] = 0;
-		System.arraycopy(data, 0, m_OutputReportBytes, 1, length);
-		int len = write(m_DeviceHandle, m_OutputReportBytes, length + 1);
+		// References:
+		// - https://www.kernel.org/doc/Documentation/hid/hidraw.txt
+		// - http://www.usb.org/developers/hidpage/HID1_11.pdf
+		byte[] temp = new byte[length + 1];
+		temp[0] = reportID;
+		System.arraycopy(data, 0, temp, 1, length);
+		int len = write(m_DeviceHandle, temp, length + 1);
 		if (len < 0)
-			return len;
+			return -1;
 		return len - 1;
 	}
 
@@ -198,10 +194,13 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	synchronized public int setFeatureReport(byte reportId, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		byte[] buffer = new byte[length + 1];
-		buffer[0] = reportId;
-		System.arraycopy(data, 0, buffer, 1, length);
- 		return ioctl(m_DeviceHandle, HIDIOCSFEATURE(length + 1), buffer);
+		byte[] temp = new byte[length + 1];
+		temp[0] = reportId;
+		System.arraycopy(data, 0, temp, 1, length);
+		int len = ioctl(m_DeviceHandle, HIDIOCSFEATURE(length + 1), temp);
+		if (len < 0)
+			return -1;
+		return len - 1;
 	}
 
 	@Override
@@ -229,17 +228,19 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	synchronized public int getFeatureReport(byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		return ioctl(m_DeviceHandle, HIDIOCGFEATURE(length), data);
+		int res = ioctl(m_DeviceHandle, HIDIOCGFEATURE(length), m_GetFeatureReportBytes);
+		if (res < 0)
+			return -1;
+		System.arraycopy(m_GetFeatureReportBytes, 1, data, 0, res - 1);
+		return res - 1;
 	}
-	
+
 	@Override
 	synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 		return ioctl(m_DeviceHandle, HIDIOCGFEATURE(length), data);
 	}
-
-
 
 	private static boolean uses_numbered_reports(byte[] report_descriptor, int size)
 
@@ -261,9 +262,9 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		while (i < size) {
 			int key = report_descriptor[i] & 0xff;
 
-			// Check for the Report ID key 
+			// Check for the Report ID key
 			if (key == 0x85) {// Report ID
-				// This device has a Report ID, which means it uses numbered reports. 
+				// This device has a Report ID, which means it uses numbered reports.
 				return true;
 			}
 
@@ -272,42 +273,37 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 			if ((key & 0xf0) == 0xf0) {
 				/*
-				 * This is a Long Item. The next byte contains the length of the
-				 * data section (value) for this key. See the HID specification,
-				 * version 1.11, section 6.2.2.3, titled "Long Items."
+				 * This is a Long Item. The next byte contains the length of the data section (value) for this key. See the HID specification, version 1.11, section 6.2.2.3, titled "Long Items."
 				 */
 				if (i + 1 < size)
 					data_len = report_descriptor[i + 1];
 				else
-					data_len = 0; // malformed report 
+					data_len = 0; // malformed report
 				key_size = 3;
 			} else {
 				/*
-				 * This is a Short Item. The bottom two bits of the key contain
-				 * the size code for the data section (value) for this key.
-				 * Refer to the HID specification, version 1.11, section
-				 * 6.2.2.2, titled "Short Items."
+				 * This is a Short Item. The bottom two bits of the key contain the size code for the data section (value) for this key. Refer to the HID specification, version 1.11, section 6.2.2.2, titled "Short Items."
 				 */
 				size_code = key & 0x3;
 				switch (size_code) {
-					case 0:
-					case 1:
-					case 2:
-						data_len = size_code;
-						break;
-					case 3:
-						data_len = 4;
-						break;
-					default:
-						// Can't ever happen since size_code is & 0x3 
-						data_len = 0;
-						break;
+				case 0:
+				case 1:
+				case 2:
+					data_len = size_code;
+					break;
+				case 3:
+					data_len = 4;
+					break;
+				default:
+					// Can't ever happen since size_code is & 0x3
+					data_len = 0;
+					break;
 				}
 				;
 				key_size = 1;
 			}
 
-			// Skip over this key and it's associated data 
+			// Skip over this key and it's associated data
 			i += data_len + key_size;
 		}
 
