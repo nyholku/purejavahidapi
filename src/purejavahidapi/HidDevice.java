@@ -137,14 +137,14 @@ abstract public class HidDevice {
 	 * 
 	 * @param data
 	 *            a byte array containing the data to be sent
-         * @param reportId
-         *            a byte specifying the report ID to send
+     * @param reportId
+     *            a byte specifying the report ID to send
 	 * @param length
 	 *            the number of bytes to send from the data array
 	 * @return number bytes actually sent or -1 if the call failed
 	 * 
 	 */
-        abstract public int setFeatureReport(byte reportId, byte[] data, int length);
+     abstract public int setFeatureReport(byte reportId, byte[] data, int length);
 
 	/**
 	 * This method sends a feature report to the device.
@@ -191,7 +191,7 @@ abstract public class HidDevice {
 	 * <p>
 	 * 
 	 * @param data
-	 *            the byte array to receive the data
+	 *            a byte into which data is received
 	 * @param length
 	 *            the size of the feature report
 	 * @return the number of bytes actually received or -1 if the call failed
