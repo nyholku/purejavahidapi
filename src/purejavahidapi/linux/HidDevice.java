@@ -231,6 +231,15 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			throw new IllegalStateException("device not open");
 		return ioctl(m_DeviceHandle, HIDIOCGFEATURE(length), data);
 	}
+	
+	@Override
+	synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
+		return ioctl(m_DeviceHandle, HIDIOCGFEATURE(length), data);
+	}
+
+
 
 	private static boolean uses_numbered_reports(byte[] report_descriptor, int size)
 

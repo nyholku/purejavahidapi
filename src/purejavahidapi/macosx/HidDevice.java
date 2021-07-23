@@ -105,10 +105,10 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			@Override
 			public void run() {
 
-				// Move the device's run loop to this thread. 
+				// Move the device's run loop to this thread.
 				IOHIDDeviceScheduleWithRunLoop(m_IOHIDDeviceRef, CFRunLoopGetCurrent(), m_CFRunLoopMode);
 
-				// RunLoopSource  is used to signal the event loop to stop 
+				// RunLoopSource is used to signal the event loop to stop
 				CFRunLoopSourceContext ctx = new CFRunLoopSourceContext();
 				ctx.perform = m_PerformSignalCallback;
 				m_CFRunLoopSourceRef = CFRunLoopSourceCreate(kCFAllocatorDefault, 0/* order */, ctx);
@@ -124,7 +124,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				int code;
 				while (!m_StopThread && !m_Disconnected) {
 					code = CFRunLoopRunInMode(m_CFRunLoopMode, 1/* sec */, false);
-					// Return if the device has been disconnected 
+					// Return if the device has been disconnected
 					if (code == kCFRunLoopRunFinished) {
 						m_Disconnected = true;
 						break;
@@ -136,7 +136,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 					}
 				}
 
-				// Wait here until close()  makes it past the call to CFRunLoopWakeUp(). 
+				// Wait here until close() makes it past the call to CFRunLoopWakeUp().
 
 				if (!m_Disconnected)
 					m_SyncShutdown.waitAndSync();
@@ -206,7 +206,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 				long str_len = CFStringGetLength(str);
 				CFRange range = new CFRange(0, str_len);
 				long[] used_buf_len = { 0 };
-				//long chars_copied = CFStringGetBytes(str, range, kCFStringEncodingUTF32LE, (byte) '?', false, buf, 255, used_buf_len);
+				// long chars_copied = CFStringGetBytes(str, range, kCFStringEncodingUTF32LE, (byte) '?', false, buf, 255, used_buf_len);
 				CFStringGetBytes(str, range, kCFStringEncodingUTF8, (byte) '?', false, null, 0, used_buf_len);
 				byte[] buf = new byte[(int) used_buf_len[0]];
 				CFStringGetBytes(str, range, kCFStringEncodingUTF8, (byte) '?', false, buf, buf.length, used_buf_len);
@@ -244,14 +244,20 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	}
 
 	static class HidReportCallback implements IOHIDReportCallback {
-		public void callback(Pointer context, int result, Pointer sender, int reportType, int reportID, Pointer report, NativeLong report_length) {
-			//System.out.println("HidReportCallback "+Thread.currentThread().getName());
+		public void callback(Pointer context, int result, Pointer sender, int reportType, int reportId, Pointer report, NativeLong report_length) {
+			// System.out.println("HidReportCallback "+Thread.currentThread().getName());
 			HidDevice dev = m_DevFromCallback.get(this);
 			if (dev != null) {
 				if (dev.m_InputReportListener != null) {
 					int length = report_length.intValue();
-					report.read(0, dev.m_InputReportData, 0, length);
-					dev.m_InputReportListener.onInputReport(dev, (byte) reportID, dev.m_InputReportData, length);
+					if (reportId == 0) {
+						length = report_length.intValue();
+						report.read(0, dev.m_InputReportData, 0, length);
+					} else {
+						length = report_length.intValue() - 1;
+						report.read(1, dev.m_InputReportData, 0, length);
+					}
+					dev.m_InputReportListener.onInputReport(dev, (byte) reportId, dev.m_InputReportData, length);
 				}
 			} else
 				System.err.println("HidReportCallback could not get the HidDevice object");
@@ -275,6 +281,27 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		if (res == kIOReturnSuccess)
 			return len[0];
 		else
+			return -1;
+	}
+
+	synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
+		int[] len = { length };
+		int res;
+
+		byte[] temp = new byte[length + 1];
+		res = IOHIDDeviceGetReport(m_IOHIDDeviceRef, kIOHIDReportTypeFeature, reportId, ByteBuffer.wrap(temp), len);
+		int rlen = len[0];
+		if (res == kIOReturnSuccess) {
+			if (reportId == 0) {
+				System.arraycopy(temp, 0, data, 0, rlen);
+				return rlen;
+			} else {
+				System.arraycopy(temp, 1, data, 0, rlen - 1);
+				return rlen - 1;
+			}
+		} else
 			return -1;
 	}
 
@@ -318,9 +345,9 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
 
-		// Disconnect the report callback before close. 
+		// Disconnect the report callback before close.
 		// according to the following link unregistering callbacks is not safe ???
-		// https://github.com/signal11/hidapi/issues/116	
+		// https://github.com/signal11/hidapi/issues/116
 
 		IOHIDDeviceRegisterInputReportCallback(m_IOHIDDeviceRef, m_InputReportBuffer, m_MaxInputReportLength, null, null);
 		IOHIDManagerRegisterDeviceRemovalCallback(MacOsXBackend.m_HidManager, null, null);
@@ -328,12 +355,12 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		IOHIDDeviceScheduleWithRunLoop(m_IOHIDDeviceRef, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
 
 		m_StopThread = true;
-		// Wake up the run thread's event loop so that the thread can exit. 
+		// Wake up the run thread's event loop so that the thread can exit.
 		CFRunLoopSourceSignal(m_CFRunLoopSourceRef);
 		CFRunLoopWakeUp(m_CFRunLoopRef);
 
 		if (Thread.currentThread() != m_Thread) {
-			// Notify the read thread that it can shut down now. 
+			// Notify the read thread that it can shut down now.
 			m_Thread.interrupt();
 			m_SyncShutdown.waitAndSync();
 

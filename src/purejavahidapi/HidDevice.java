@@ -135,10 +135,10 @@ abstract public class HidDevice {
 	 * if the report length does not match what the device expects.
 	 * <p>
 	 * 
+     * @param reportId
+     *            an int specifying the report ID to send
 	 * @param data
 	 *            a byte array containing the data to be sent
-     * @param reportId
-     *            a byte specifying the report ID to send
 	 * @param length
 	 *            the number of bytes to send from the data array
 	 * @return number bytes actually sent or -1 if the call failed
@@ -191,13 +191,41 @@ abstract public class HidDevice {
 	 * <p>
 	 * 
 	 * @param data
-	 *            a byte into which data is received
+	 *            a byte array into which data is received
 	 * @param length
 	 *            the size of the feature report
 	 * @return the number of bytes actually received or -1 if the call failed
 	 */
+    @Deprecated
 	abstract public int getFeatureReport(byte[] data, int length);
 
+	/**
+	 * This method reads a feature report from the device.
+	 * <p>
+	 * See USB HID specification to learn more about feature reports.
+	 * <p>
+	 * This method blocks until the 'length' number of bytes has been received
+	 * to the 'data' buffer or the device is closed.
+	 * <p>
+	 * This method returns the number of bytes actually received or -1 in case
+	 * there was error in communicating with the device.
+	 * <p>
+	 * As of this writing it is unclear under what circumstances something else
+	 * than 'length' number of bytes could be returned as well as what happens
+	 * if the report length does not match what the device expects.
+	 * <p>
+	 * 
+     * @param reportId
+     *            an specifying the report ID to received
+	 * @param data
+	 *            a byte array into which data is received
+	 * @param length
+	 *            the size of the feature report
+	 * @return the number of bytes actually received or -1 if the call failed
+	 */
+	abstract public int getFeatureReport(int reportId, byte[] data, int length);
+
+	
 	/**
 	 * This method sets the device removal listener.
 	 * <p>

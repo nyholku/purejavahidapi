@@ -160,8 +160,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		m_OutputReportMemory.write(1, data, 0, length);
 		// In windows always attempt to write as many bytes as there are in the longest
 		// report plus one for the report number (even if zero ie not used)
-		if (!WriteFile(m_Handle, m_OutputReportMemory, m_OutputReportLength, m_OutputReportBytesWritten,
-				m_OutputReportOverlapped)) {
+		if (!WriteFile(m_Handle, m_OutputReportMemory, m_OutputReportLength, m_OutputReportBytesWritten, m_OutputReportOverlapped)) {
 			if (GetLastError() != ERROR_IO_PENDING) {
 				// WriteFile() failed. Return error.
 				// register_error(dev, "WriteFile");
@@ -225,6 +224,40 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 	}
 
+	synchronized public int getFeatureReport(int reportId, byte[] data, int length) {
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
+		if (false) { // can't use this as it will not return the size of the report
+			if (!HidD_GetFeature(m_Handle, data, length)) {
+				// register_error(dev, "HidD_SetFeature");
+				System.out.println(GetLastError());
+				return -1;
+			}
+		} else {
+			int[] bytes = { 0 };
+
+			OVERLAPPED ol = new OVERLAPPED();
+			Pointer buffer = new Memory(data.length);
+			byte[] reportid = { (byte) reportId };
+			buffer.write(0, reportid, 0, 1);
+			if (!DeviceIoControl(m_Handle, IOCTL_HID_GET_FEATURE, buffer, length, buffer, length, bytes, ol)) {
+				// System.out.println(GetLastError());
+				if (GetLastError() != ERROR_IO_PENDING)
+					return -1;
+			}
+
+			if (!GetOverlappedResult(m_Handle, ol, bytes, true/* wait */))
+				return -1;
+			int n = bytes[0];
+			byte[] t = buffer.getByteArray(0, n);
+			System.arraycopy(t, 1, data, 0, n);
+			return n;
+		}
+		return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go
+					// figure
+
+	}
+
 	private void runReadOnBackground() {
 		m_SyncStart.waitAndSync();
 		while (!m_StopThread) {
@@ -237,8 +270,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			// the data is always
 			// preceded with the report number (even if not used in case of which it is
 			// zero)
-			if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, m_InputReportBytesRead,
-					m_InputReportOverlapped)) {
+			if (!ReadFile(m_Handle, m_InputReportMemory, m_InputReportLength, m_InputReportBytesRead, m_InputReportOverlapped)) {
 				if (GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
 					break; // early exit if the device disappears
 				if (GetLastError() != ERROR_IO_PENDING) {
@@ -273,7 +305,13 @@ public class HidDevice extends purejavahidapi.HidDevice {
 
 	@Override
 	public int setFeatureReport(byte reportId, byte[] data, int length) {
-		// TODO Auto-generated method stub
-		return 0;
+		if (!m_Open)
+			throw new IllegalStateException("device not open");
+		byte[] temp = new byte[length + 1];
+		temp[0] = reportId;
+		System.arraycopy(data, 0, temp, 1, length);
+		if (!HidD_SetFeature(m_Handle, temp, length+1))
+			return -1;
+		return length;
 	}
 }
