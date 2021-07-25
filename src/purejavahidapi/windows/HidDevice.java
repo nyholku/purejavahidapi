@@ -249,8 +249,8 @@ public class HidDevice extends purejavahidapi.HidDevice {
 			if (!GetOverlappedResult(m_Handle, ol, bytes, true/* wait */))
 				return -1;
 			int n = bytes[0];
-			byte[] t = buffer.getByteArray(0, n);
-			System.arraycopy(t, 1, data, 0, n);
+			byte[] t = buffer.getByteArray(1, n);
+			System.arraycopy(t, 0, data, 0, n);
 			return n;
 		}
 		return -1; // Eclipse says this is unreachable (it is), but won't compile without it ... go
@@ -307,11 +307,24 @@ public class HidDevice extends purejavahidapi.HidDevice {
 	public int setFeatureReport(byte reportId, byte[] data, int length) {
 		if (!m_Open)
 			throw new IllegalStateException("device not open");
-		byte[] temp = new byte[length + 1];
-		temp[0] = reportId;
-		System.arraycopy(data, 0, temp, 1, length);
-		if (!HidD_SetFeature(m_Handle, temp, length+1))
+		int[] bytes = { 0 };
+
+		OVERLAPPED ol = new OVERLAPPED();
+		Pointer buffer = new Memory(data.length);
+		byte[] reportid = { (byte) reportId };
+		buffer.write(0, reportid, 0, 1);
+		buffer.write(0, data, 1, length);
+		if (!DeviceIoControl(m_Handle, IOCTL_HID_SET_FEATURE, buffer, length, buffer, length, bytes, ol)) {
+			// System.out.println(GetLastError());
+			if (GetLastError() != ERROR_IO_PENDING)
+				return -1;
+		}
+
+		if (!GetOverlappedResult(m_Handle, ol, bytes, true/* wait */))
 			return -1;
-		return length;
+		int n = bytes[0];
+		byte[] t = buffer.getByteArray(1, n);
+		System.arraycopy(t, 0, data, 0, n);
+		return n;
 	}
 }
