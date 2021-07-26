@@ -177,15 +177,15 @@ public class HidDeviceInfo {
 				+ "manufacturer '%s', " //
 				+ "product id '%s'] " //
 				, //
-				m_DeviceId, //
-				m_Path, //
+				m_DeviceId.trim(), //
+				m_Path.trim(), //
 				m_VendorId & 0xFFFF, //
 				m_ProductId & 0xFFFF, //
 				m_ReleaseNumber & 0xFFFF, //
 				m_UsagePage & 0xFFFF, //
-				m_SerialNumberString, //
-				m_ManufactureString, //
-				m_ProductString//
+				m_SerialNumberString.trim(), //
+				m_ManufactureString.trim(), //
+				m_ProductString.trim()//
 		);
 	}
 }
