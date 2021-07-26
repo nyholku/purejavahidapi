@@ -52,14 +52,14 @@ public class HidDeviceInfo {
 	protected String m_ManufactureString;
 	protected String m_ProductString;
 
-    /**
-	 * This method returns a string that represents a platform dependent path
-	 * that describes the 'physical' path through hubs and ports to the device.
+	/**
+	 * This method returns a string that represents a platform dependent path that
+	 * describes the 'physical' path through hubs and ports to the device.
 	 * <p>
-	 * The main use of the path is to pass it to the {@link
-	 * PureJavaHidApi#openDevice(HidDeviceInfo)} to obtain a {@link
-	 * HidDevice} instance which can subsequently be used to
-	 * communicate with the device.
+	 * The main use of the path is to pass it to the
+	 * {@link PureJavaHidApi#openDevice(HidDeviceInfo)} to obtain a
+	 * {@link HidDevice} instance which can subsequently be used to communicate with
+	 * the device.
 	 * 
 	 * @return a string representing a 'path' to the device
 	 */
@@ -71,9 +71,8 @@ public class HidDeviceInfo {
 	 * This method returns the 16 bit Vendor Id of the device.
 	 * <p>
 	 * Note that the return type is <code>short</code> so when compared against
-	 * literals or variables of type <code>int</code> sign extension interferes
-	 * and thus it is necessary to cast the <code>int</code> type to
-	 * <code>short</code>.
+	 * literals or variables of type <code>int</code> sign extension interferes and
+	 * thus it is necessary to cast the <code>int</code> type to <code>short</code>.
 	 * 
 	 * @return the 16 bit Vendor Id
 	 */
@@ -85,9 +84,8 @@ public class HidDeviceInfo {
 	 * This method returns the 16 bit Product Id of the device.
 	 * <p>
 	 * Note that the return type is <code>short</code> so when compared against
-	 * literals or variables of type <code>int</code> sign extension interferes
-	 * and thus it is necessary to cast the <code>int</code> type to
-	 * <code>short</code>.
+	 * literals or variables of type <code>int</code> sign extension interferes and
+	 * thus it is necessary to cast the <code>int</code> type to <code>short</code>.
 	 * 
 	 * @return the 16 bit Product Id
 	 */
@@ -99,9 +97,8 @@ public class HidDeviceInfo {
 	 * This method returns the 16 bit Release Number of the device.
 	 * <p>
 	 * Note that the return type is <code>short</code> so when compared against
-	 * literals or variables of type <code>int</code> sign extension interferes
-	 * and thus it is necessary to cast the <code>int</code> type to
-	 * <code>short</code>
+	 * literals or variables of type <code>int</code> sign extension interferes and
+	 * thus it is necessary to cast the <code>int</code> type to <code>short</code>
 	 * 
 	 * @return the 16 bit Release Number
 	 */
@@ -113,9 +110,8 @@ public class HidDeviceInfo {
 	 * This method returns the 16 bit Usage Page number of the device.
 	 * <p>
 	 * Note that the return type is <code>short</code> so when compared against
-	 * literals or variables of type <code>int</code> sign extension interferes
-	 * and thus it is necessary to cast the <code>int</code> type to
-	 * <code>short</code>
+	 * literals or variables of type <code>int</code> sign extension interferes and
+	 * thus it is necessary to cast the <code>int</code> type to <code>short</code>
 	 * 
 	 * @return the 16 bit Usage Page number
 	 */
@@ -124,8 +120,8 @@ public class HidDeviceInfo {
 	}
 
 	/**
-	 * This method returns the Manufacturer String if available otherwise null
-	 * is returned.
+	 * This method returns the Manufacturer String if available otherwise null is
+	 * returned.
 	 * <p>
 	 * 
 	 * @return the Manufacturer String or null
@@ -146,8 +142,8 @@ public class HidDeviceInfo {
 	}
 
 	/**
-	 * This method returns the Serial Number String if available otherwise null
-	 * is returned.
+	 * This method returns the Serial Number String if available otherwise null is
+	 * returned.
 	 * <p>
 	 * 
 	 * @return the Serial Number String or null
@@ -156,8 +152,40 @@ public class HidDeviceInfo {
 		return m_SerialNumberString;
 	}
 
+	/**
+	 * This method returns the Device Id String if available otherwise null is
+	 * returned.
+	 * <p>
+	 * 
+	 * @return the Device Id String or null
+	 */
+
 	public String getDeviceId() {
 		return m_DeviceId;
 	}
 
+	public String toString() {
+
+		return String.format("[" //
+				+ "device id '%s', " //
+				+ "path '%s', " //
+				+ "vendor id 0x%04X, " //
+				+ "product id 0x%04X, " //
+				+ "release num 0x%04X, " //
+				+ "usage page id 0x%04X, " //
+				+ "serial '%s', " //
+				+ "manufacturer '%s', " //
+				+ "product id '%s'] " //
+				, //
+				m_DeviceId, //
+				m_Path, //
+				m_VendorId & 0xFFFF, //
+				m_ProductId & 0xFFFF, //
+				m_ReleaseNumber & 0xFFFF, //
+				m_UsagePage & 0xFFFF, //
+				m_SerialNumberString, //
+				m_ManufactureString, //
+				m_ProductString//
+		);
+	}
 }
