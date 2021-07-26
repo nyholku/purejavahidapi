@@ -80,6 +80,37 @@ public class WindowsBackend extends Backend {
 
 	}
 
+	private boolean isSamePhysicalDevice(String devId1, String devId2) {
+		String[] p1 = devId1.split("\\\\");
+		String[] p2 = devId2.split("\\\\");
+		if (p1 == null || p2 == null)
+			return false;
+		if (p1.length < 3 || p2.length < 3)
+			return false;
+		if (!p1[0].equals(p2[0]))
+			return false;
+		String[] p11 = p1[1].split("&");
+		String[] p21 = p2[1].split("&");
+		if (p11 == null || p21 == null)
+			return false;
+		if (p11.length < 3 || p21.length < 3)
+			return false;
+		if (!p11[0].equals(p21[0]))
+			return false;
+		if (!p11[1].equals(p21[1]))
+			return false;
+		String[] p12 = p1[2].split("&");
+		String[] p22 = p2[2].split("&");
+		if (p12 == null || p22 == null)
+			return false;
+		if (p12.length < 4 || p22.length < 4)
+			return false;
+		for (int i = 0; i < 3; i++)
+			if (!p12[i].equals(p22[i]))
+				return false;
+		return true;
+	}
+
 	@Override
 	public List<purejavahidapi.HidDeviceInfo> enumerateDevices() {
 		try {
@@ -116,7 +147,8 @@ public class WindowsBackend extends Backend {
 				}
 
 				// get the device path
-				int[] cbSize = { 8, 6, 5 }; // horrible hack here, because it is not easy to know what cbSize is we try them all
+				int[] cbSize = { 8, 6, 5 }; // horrible hack here, because it is not easy to know what cbSize is we try them
+											// all
 				for (int i = 0; i < cbSize.length; i++) {
 					device_interface_detail_data = new SP_DEVICE_INTERFACE_DETAIL_DATA_A(cbSize[i], required_size[0]);
 					if (SetupDiGetDeviceInterfaceDetail(device_info_set, device_interface_data, device_interface_detail_data, required_size[0], null, null))
@@ -127,9 +159,11 @@ public class WindowsBackend extends Backend {
 					reportLastError(); // something else went wrong, report it
 				}
 				if (device_interface_detail_data == null)
-					continue; // this should never happen, but let's ignore it if it happens so that the enumeration will not totally fail
+					continue; // this should never happen, but let's ignore it if it happens so that the
+								// enumeration will not totally fail
 
-				// Make sure this device is of Setup Class "HIDClass" and has a driver bound to it.
+				// Make sure this device is of Setup Class "HIDClass" and has a driver bound to
+				// it.
 				char[] driverNameChars = new char[256];
 				if (!SetupDiEnumDeviceInfo(device_info_set, deviceIndex, devinfo_data)) {
 					reportLastError();
@@ -147,7 +181,8 @@ public class WindowsBackend extends Backend {
 				String drivername = new String(driverNameChars, 0, driverNameLen - 1);
 				if ("HIDClass".equals(drivername)) {
 					if (!SetupDiGetDeviceRegistryProperty(device_info_set, devinfo_data, SPDRP_DRIVER, null, driverNameChars, driverNameChars.length, null)) {// ok, found a driver
-						if (INSTANCE.GetLastError() != ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not have this property or the device is faulty
+						if (INSTANCE.GetLastError() != ERROR_INVALID_DATA) // Invalid data is legitime from code point of view, maybe the device does not
+																			// have this property or the device is faulty
 							reportLastError();
 						continue;
 					}
@@ -181,7 +216,8 @@ public class WindowsBackend extends Backend {
 
 					String path = new String(device_interface_detail_data.DevicePath);
 					// path += DEVICE_ID_SEPARATOR + deviceId;
-					// FIXME, need to figure out how to smugle device ID to the actual device ... or how
+					// FIXME, need to figure out how to smugle device ID to the actual device ... or
+					// how
 					// recreate as above when opening the device
 					devHandle = openDeviceHandle(path, true);
 					if (devHandle == INVALID_HANDLE_VALUE)
@@ -190,7 +226,21 @@ public class WindowsBackend extends Backend {
 					HIDD_ATTRIBUTES attrib = new HIDD_ATTRIBUTES();
 					attrib.Size = new NativeLong(attrib.size());
 					HidD_GetAttributes(devHandle, attrib);
-					list.add(new HidDeviceInfo(path, deviceId, devHandle, attrib));
+
+					purejavahidapi.HidDeviceInfo info = null;
+
+					for (purejavahidapi.HidDeviceInfo t : list) {
+						if (isSamePhysicalDevice(t.getDeviceId(), deviceId)) {
+							info = t;
+						}
+					}
+
+					if (info == null) {
+						info = new HidDeviceInfo(devHandle, attrib);
+						list.add(info);
+					}
+
+					((HidDeviceInfo) info).addDevicePath(deviceId, path);
 
 					INSTANCE.CloseHandle(devHandle);
 				}
@@ -198,6 +248,9 @@ public class WindowsBackend extends Backend {
 			}
 
 			SetupDiDestroyDeviceInfoList(device_info_set);
+//			for (purejavahidapi.HidDeviceInfo t : list)
+//				System.out.println(t);
+//			System.out.println();
 			return list;
 		} catch (Exception e) {
 			e.printStackTrace();

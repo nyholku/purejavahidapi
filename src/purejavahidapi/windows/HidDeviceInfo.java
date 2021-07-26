@@ -44,12 +44,11 @@ import purejavahidapi.windows.HidLibrary.HIDP_CAPS;
 import purejavahidapi.windows.HidLibrary.HIDP_PREPARSED_DATA;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 
-/* package*/class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
-
-	public HidDeviceInfo(String path, String deviceId, HANDLE handle, HIDD_ATTRIBUTES attrib) {
+/* package */ class HidDeviceInfo extends purejavahidapi.HidDeviceInfo {
+	final static String SEPARATOR=":";
+	
+	/* package */ HidDeviceInfo(HANDLE handle, HIDD_ATTRIBUTES attrib) {
 		try {
-			m_Path = path;
-			m_DeviceId = deviceId;
 			m_VendorId = attrib.VendorID;
 			m_ProductId = attrib.ProductID;
 
@@ -66,7 +65,7 @@ import com.sun.jna.platform.win32.WinNT.HANDLE;
 			}
 
 			Memory wstr = new Memory(256);
-			int sizeofWstr = (int)(wstr.size());
+			int sizeofWstr = (int) (wstr.size());
 
 			if (HidD_GetSerialNumberString(handle, wstr, sizeofWstr))
 				m_SerialNumberString = wstr.getWideString(0);
@@ -75,9 +74,20 @@ import com.sun.jna.platform.win32.WinNT.HANDLE;
 			if (HidD_GetProductString(handle, wstr, sizeofWstr))
 				m_ProductString = wstr.getWideString(0);
 
-
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+
+	}
+
+	/* package */ void addDevicePath(String deviceId, String devicePath) {
+		if (m_DeviceId == null) {
+			m_DeviceId = deviceId;
+			m_DevicePath = devicePath;
+		} else {
+			m_DeviceId = m_DeviceId + SEPARATOR + deviceId;
+			m_DevicePath = m_DevicePath + SEPARATOR + devicePath;
+
 		}
 
 	}
