@@ -43,7 +43,7 @@ package purejavahidapi;
  */
 public class HidDeviceInfo {
 	protected String m_DeviceId;
-	protected String m_Path;
+	protected String m_DevicePath;
 	protected short m_VendorId;
 	protected short m_ProductId;
 	protected short m_ReleaseNumber;
@@ -64,7 +64,7 @@ public class HidDeviceInfo {
 	 * @return a string representing a 'path' to the device
 	 */
 	public String getPath() {
-		return m_Path;
+		return m_DevicePath;
 	}
 
 	/**
@@ -178,7 +178,7 @@ public class HidDeviceInfo {
 				+ "product id '%s'] " //
 				, //
 				m_DeviceId.trim(), //
-				m_Path.trim(), //
+				m_DevicePath.trim(), //
 				m_VendorId & 0xFFFF, //
 				m_ProductId & 0xFFFF, //
 				m_ReleaseNumber & 0xFFFF, //

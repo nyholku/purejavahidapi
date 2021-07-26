@@ -41,7 +41,7 @@ import static purejavahidapi.macosx.HidDevice.*;
 		m_DeviceId = Integer.toString(m_NextDeviceId++);
 		m_ProductId = (short) getIntProperty(dev, CFSTR(kIOHIDProductIDKey));
 		m_VendorId = (short) getIntProperty(dev, CFSTR(kIOHIDVendorIDKey));
-		m_Path = createPathForDevide(dev);
+		m_DevicePath = createPathForDevide(dev);
 		m_ManufactureString = getStringProperty(dev, CFSTR(kIOHIDManufacturerKey));
 		m_SerialNumberString = getStringProperty(dev, CFSTR(kIOHIDSerialNumberKey));
 		m_ProductString = getStringProperty(dev, CFSTR(kIOHIDProductKey));
