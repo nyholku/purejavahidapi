@@ -62,16 +62,15 @@ public class HidLibrary {
 
 		@Override
 		protected List<String> getFieldOrder() {
-			return Arrays.asList(
-					"LinkUsage", //
-					"LinkUsagePage",//
+			return Arrays.asList("LinkUsage", //
+					"LinkUsagePage", //
 					"Parent", //
-					"NumberOfChildren",//
+					"NumberOfChildren", //
 					"NextSibling", //
-					"FirstChild",//
-					"CollectionType",//
+					"FirstChild", //
+					"CollectionType", //
 					"UserContext"//
-					);
+			);
 		}
 	}
 
@@ -99,13 +98,13 @@ public class HidLibrary {
 
 		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
-					"UsageMin",//
-					"UsageMax",//
-					"StringMin",//
-					"StringMax",//
-					"DesignatorMin",//
-					"DesignatorMax",//
-					"DataIndexMin",//
+					"UsageMin", //
+					"UsageMax", //
+					"StringMin", //
+					"StringMax", //
+					"DesignatorMin", //
+					"DesignatorMax", //
+					"DataIndexMin", //
 					"DataIndexMax"//
 			);
 		}
@@ -123,13 +122,13 @@ public class HidLibrary {
 
 		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
-					"Usage",//
-					"Reserved1",//
-					"StringIndex",//
-					"Reserved2",//
-					"DesignatorIndex",//
-					"Reserved3",//
-					"DataIndex",//
+					"Usage", //
+					"Reserved1", //
+					"StringIndex", //
+					"Reserved2", //
+					"DesignatorIndex", //
+					"Reserved3", //
+					"DataIndex", //
 					"Reserved4"//
 			);
 		}
@@ -156,7 +155,7 @@ public class HidLibrary {
 		public byte Reserved;
 		public short BitSize;
 		public short ReportCount;
-		public short[] Reserved2=new short[5];
+		public short[] Reserved2 = new short[5];
 //		public short Reserved2_1;
 //		public short Reserved2_2;
 //		public short Reserved2_3;
@@ -170,14 +169,14 @@ public class HidLibrary {
 		public NativeLong PhysicalMax;
 
 		// public HIDP_VALUE_CAPS_union u=new HIDP_VALUE_CAPS_union();
-		//		public short Usage;
-		//		public short Reserved1;
-		//		public short StringIndex;
-		//		public short Reserved2;
-		//		public short DesignatorIndex;
-		//		public short Reserved3;
-		//		public short DataIndex;
-		//		public short Reserved4;
+		// public short Usage;
+		// public short Reserved1;
+		// public short StringIndex;
+		// public short Reserved2;
+		// public short DesignatorIndex;
+		// public short Reserved3;
+		// public short DataIndex;
+		// public short Reserved4;
 
 		// USAGE UsageMin;
 		// USAGE UsageMax;
@@ -210,33 +209,33 @@ public class HidLibrary {
 		@Override
 		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
-					"UsagePage",//
-					"ReportID",//
-					"IsAlias",//
-					"BitField",//
-					"LinkCollection",//
-					"LinkUsage",//
-					"LinkUsagePage",//
-					"IsRange",//
-					"IsStringRange",//
-					"IsDesignatorRange",//
-					"IsAbsolute",//
-					"HasNull",//
-					"Reserved",//
-					"BitSize",//
-					"ReportCount",//
-					"Reserved2",//
+					"UsagePage", //
+					"ReportID", //
+					"IsAlias", //
+					"BitField", //
+					"LinkCollection", //
+					"LinkUsage", //
+					"LinkUsagePage", //
+					"IsRange", //
+					"IsStringRange", //
+					"IsDesignatorRange", //
+					"IsAbsolute", //
+					"HasNull", //
+					"Reserved", //
+					"BitSize", //
+					"ReportCount", //
+					"Reserved2", //
 //					"Reserved2_1",//
 //					"Reserved2_2",//
 //					"Reserved2_3",//
 //					"Reserved2_4",//
 //					"Reserved2_5",//
-					"UnitsExp",//
-					"Units",//
-					"LogicalMin",//
-					"LogicalMax",//
-					"PhysicalMin",//
-					"PhysicalMax",//
+					"UnitsExp", //
+					"Units", //
+					"LogicalMin", //
+					"LogicalMax", //
+					"PhysicalMin", //
+					"PhysicalMax", //
 					"u"//
 			);
 
@@ -256,7 +255,7 @@ public class HidLibrary {
 		public byte IsStringRange;
 		public byte IsDesignatorRange;
 		public byte IsAbsolute;
-		public int[] Reserved=new int[10];
+		public int[] Reserved = new int[10];
 //		public int Reserved_1;
 //		public int Reserved_2;
 //		public int Reserved_3;
@@ -283,18 +282,18 @@ public class HidLibrary {
 		@Override
 		protected List<String> getFieldOrder() {
 			return Arrays.asList(//
-					"UsagePage",//
-					"ReportID",//
-					"IsAlias",//
-					"BitField",//
-					"LinkCollection",//
-					"LinkUsage",//
-					"LinkUsagePage",//
-					"IsRange",//
-					"IsStringRange",//
-					"IsDesignatorRange",//
-					"IsAbsolute",//
-					"Reserved",//
+					"UsagePage", //
+					"ReportID", //
+					"IsAlias", //
+					"BitField", //
+					"LinkCollection", //
+					"LinkUsage", //
+					"LinkUsagePage", //
+					"IsRange", //
+					"IsStringRange", //
+					"IsDesignatorRange", //
+					"IsAbsolute", //
+					"Reserved", //
 //					"Reserved_2",//
 //					"Reserved_3",//
 //					"Reserved_4",//
@@ -321,11 +320,14 @@ public class HidLibrary {
 
 		@Override
 		protected List<String> getFieldOrder() {
-			return Arrays.asList(
-					"Usage", 
-					"UsagePage",
-					"InputReportByteLength", 
-					"OutputReportByteLength", "FeatureReportByteLength", "Reserved", "fields_not_used_by_hidapi");
+			return Arrays.asList("Usage", //
+					"UsagePage", //
+					"InputReportByteLength", //
+					"OutputReportByteLength", //
+					"FeatureReportByteLength", //
+					"Reserved", //
+					"fields_not_used_by_hidapi"//
+			);
 		}
 	};
 
@@ -341,12 +343,12 @@ public class HidLibrary {
 		boolean HidD_GetSerialNumberString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength);
 
 		boolean HidD_GetManufacturerString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength);
-		
+
 		boolean HidD_GetProductString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength);
 
 		boolean HidD_SetFeature(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
 
-		boolean HidD_GetFeature(HANDLE HidDeviceObject,  byte[] ReportBuffer, int ReportBufferLength);
+		boolean HidD_GetFeature(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
 
 		boolean HidP_GetLinkCollectionNodes(HIDP_LINK_COLLECTION_NODE[] LinkCollectionNodes, int[] LinkCollectionNodesLength, HIDP_PREPARSED_DATA PreparsedData);
 
@@ -356,8 +358,8 @@ public class HidLibrary {
 
 		boolean HidP_GetButtonCaps(int ReportType, HIDP_BUTTON_CAPS[] ButtonCaps, short[] ButtonCapsLength, HIDP_PREPARSED_DATA PreparsedData);
 
-		boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,Pointer Buffer,int BufferLength);
-		
+		boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength);
+
 		boolean HidD_SetOutputReport(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength);
 	}
 
@@ -384,7 +386,7 @@ public class HidLibrary {
 	static public boolean HidD_GetManufacturerString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength) {
 		return INSTANCE.HidD_GetManufacturerString(HidDeviceObject, Buffer, BufferLength);
 	}
-	
+
 	static public boolean HidD_GetProductString(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength) {
 		return INSTANCE.HidD_GetProductString(HidDeviceObject, Buffer, BufferLength);
 	}
@@ -393,7 +395,7 @@ public class HidLibrary {
 		return INSTANCE.HidD_SetFeature(HidDeviceObject, ReportBuffer, ReportBufferLength);
 	}
 
-	static public boolean HidD_GetFeature(HANDLE HidDeviceObject,  byte[] ReportBuffer, int ReportBufferLength) {
+	static public boolean HidD_GetFeature(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength) {
 		return INSTANCE.HidD_GetFeature(HidDeviceObject, ReportBuffer, ReportBufferLength);
 	}
 
@@ -412,12 +414,12 @@ public class HidLibrary {
 	static public boolean HidP_GetButtonCaps(int ReportType, HIDP_BUTTON_CAPS[] ValueCaps, short[] ValueCapsLength, HIDP_PREPARSED_DATA PreparsedData) {
 		return INSTANCE.HidP_GetButtonCaps(ReportType, ValueCaps, ValueCapsLength, PreparsedData);
 	}
-	
-	static public boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject,Pointer Buffer,int BufferLength) {
+
+	static public boolean HidD_GetPhysicalDescriptor(HANDLE HidDeviceObject, Pointer Buffer, int BufferLength) {
 		return INSTANCE.HidD_GetPhysicalDescriptor(HidDeviceObject, Buffer, BufferLength);
 	}
 
-	static public boolean HidD_SetOutputReport(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength){
+	static public boolean HidD_SetOutputReport(HANDLE HidDeviceObject, byte[] ReportBuffer, int ReportBufferLength) {
 		return INSTANCE.HidD_SetOutputReport(HidDeviceObject, ReportBuffer, ReportBufferLength);
 	}
 
