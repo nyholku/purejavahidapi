@@ -14,6 +14,9 @@ public class CLibrary {
 	static CLibraryInterface INSTANCE = (CLibraryInterface) Native.load("c", CLibraryInterface.class);
 
 	public static short POLLIN = 0x0001;
+	public static int ENOENT = 2;
+	public static int EACCES = 13;
+	public static int EBUSY= 16;
 
 	interface CLibraryInterface extends Library {
 		int open(String pathname, int flags);
