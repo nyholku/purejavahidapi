@@ -29,7 +29,9 @@
  */
 package purejavahidapi.linux;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 
 import com.sun.jna.Native;
 
@@ -64,8 +66,14 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		udev_unref(udev);
 
 		m_DeviceHandle = open(dev_path, O_RDWR);
-		if (m_DeviceHandle <= 0)
-			throw new IOException("open() failed, errno " + Native.getLastError());
+		if (m_DeviceHandle <= 0) {
+			int err=Native.getLastError();
+			if (err == EACCES)
+				throw new AccessDeniedException(dev_path);
+			if (err == ENOENT)
+				throw new FileNotFoundException(dev_path);
+			throw new IOException("open() failed, errno " + err);
+		}
 
 		int[] pipes = new int[2];
 		int piperes = pipe(pipes);
