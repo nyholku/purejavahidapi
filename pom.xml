@@ -5,7 +5,7 @@
 
     <groupId>purejavahidapi</groupId>
     <artifactId>purejavahidapi</artifactId>
-    <version>0.0.16</version>
+    <version>0.0.17</version>
     <packaging>jar</packaging>
 
     <name>Pure Java HID-API</name>
@@ -23,7 +23,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0-M2</version>
+                <version>3.0.0-M3</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>
@@ -33,7 +33,7 @@
                         <configuration>
                             <rules>
                                 <requireMavenVersion>
-                                    <version>3.0.5</version>
+                                    <version>3.1.0</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>
@@ -66,7 +66,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -83,12 +83,12 @@
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna-platform</artifactId>
-            <version>5.7.0</version>
+            <version>5.9.0</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>5.7.0</version>
+            <version>5.9.0</version>
         </dependency>
     </dependencies>
 </project>
