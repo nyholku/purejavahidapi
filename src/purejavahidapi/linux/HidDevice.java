@@ -147,6 +147,10 @@ public class HidDevice extends purejavahidapi.HidDevice {
 						}
 						m_InputReportListener.onInputReport(this, reportID, m_InputReportBytes, bytes_read);
 					}
+				} else {
+					// either we had data from nudge pipe
+					// or one of the FDs was closed/erroneous (POLLERR | POLLHUP | POLLNVAL)
+					break;
 				}
 			}
 
