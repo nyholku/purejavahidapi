@@ -5,16 +5,25 @@
 
     <groupId>purejavahidapi</groupId>
     <artifactId>purejavahidapi</artifactId>
-    <version>0.0.18</version>
+    <version>0.0.20</version>
     <packaging>jar</packaging>
 
     <name>Pure Java HID-API</name>
     <url>https://github.com/nyholku/purejavahidapi</url>
 
+	<licenses>
+		<license>
+			<name>BSD License 2.0</name>
+			<url>https://opensource.org/licenses/BSD-3-Clause</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
+
 
     <build>
         <sourceDirectory>src</sourceDirectory>
@@ -128,12 +137,12 @@
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna-platform</artifactId>
-            <version>5.11.0</version>
+            <version>5.12.1</version>
         </dependency>
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>5.11.0</version>
+            <version>5.12.1</version>
         </dependency>
     </dependencies>
 </project>
