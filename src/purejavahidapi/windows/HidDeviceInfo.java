@@ -60,6 +60,7 @@ import com.sun.jna.platform.win32.WinNT.HANDLE;
 			if (HidD_GetPreparsedData(handle, ppd)) {
 				if (HidP_GetCaps(ppd[0], caps) == HIDP_STATUS_SUCCESS) {
 					m_UsagePage = caps.UsagePage;
+					m_UsageId = caps.Usage;
 				}
 
 				HidD_FreePreparsedData(ppd[0]);
