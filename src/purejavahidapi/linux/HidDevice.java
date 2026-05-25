@@ -66,7 +66,7 @@ public class HidDevice extends purejavahidapi.HidDevice {
 		udev_unref(udev);
 
 		m_DeviceHandle = open(dev_path, O_RDWR);
-		if (m_DeviceHandle <= 0) {
+		if (m_DeviceHandle < 0) {
 			int err=Native.getLastError();
 			if (err == EACCES)
 				throw new AccessDeniedException(dev_path);
